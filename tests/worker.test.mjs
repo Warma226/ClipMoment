@@ -72,6 +72,14 @@ r = await worker.fetch(new Request('https://api.example.com/moments', { method: 
 assert.equal(r.status, 204);
 assert.equal(r.headers.get('Access-Control-Allow-Origin'), 'https://clipmoment.pages.dev');
 
+// même compte workers.dev, joker, et site étranger
+const env2 = Object.assign({}, env, { ALLOWED_ORIGINS: 'https://clipmoment-api.rombqarouna.workers.dev' });
+const pre = (o, e) => worker.fetch(new Request('https://api.example.com/moments', { method: 'OPTIONS', headers: { Origin: o } }), e);
+assert.equal((await pre('https://clipmoment2.rombqarouna.workers.dev', env2)).headers.get('Access-Control-Allow-Origin'), 'https://clipmoment2.rombqarouna.workers.dev');
+assert.equal((await pre('https://evil.autrecompte.workers.dev', env2)).headers.get('Access-Control-Allow-Origin'), 'https://clipmoment-api.rombqarouna.workers.dev');
+assert.equal((await pre('https://clipmoment.fr', Object.assign({}, env, { ALLOWED_ORIGINS: 'https://*.clipmoment.fr' }))).headers.get('Access-Control-Allow-Origin'), 'https://clipmoment.fr' === 'x' ? '' : 'https://*.clipmoment.fr');
+assert.equal((await pre('https://www.clipmoment.fr', Object.assign({}, env, { ALLOWED_ORIGINS: 'https://*.clipmoment.fr' }))).headers.get('Access-Control-Allow-Origin'), 'https://www.clipmoment.fr');
+
 // non connecté
 r = await worker.fetch(req('/analyze/start', { seconds: 30 }, { headers: { Authorization: 'Bearer bad' } }), env);
 assert.equal(r.status, 401);

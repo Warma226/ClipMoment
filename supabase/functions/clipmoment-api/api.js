@@ -63,11 +63,28 @@ function isConfigured(env) {
 const sttModel = (env) => env.GROQ_STT_MODEL || 'whisper-large-v3-turbo';
 const llmModel = (env) => env.GROQ_LLM_MODEL || 'openai/gpt-oss-120b';
 
+// Une adresse autorisée sur *.workers.dev ou *.pages.dev autorise aussi les autres sites du même compte
+// (ex. clipmoment-api.toncompte.workers.dev → clipmoment2.toncompte.workers.dev). « * » est accepté en début de nom.
+function originAllowed(origin, allowed) {
+  let o;
+  try { o = new URL(origin); } catch (e) { return false; }
+  if (o.protocol !== 'https:' && o.hostname !== 'localhost') return false;
+  return allowed.some((a) => {
+    if (a === origin) return true;
+    let u;
+    try { u = new URL(a.replace('://*.', '://wildcard.')); } catch (e) { return false; }
+    const parts = u.hostname.split('.');
+    if (a.includes('://*.')) return o.hostname.endsWith('.' + parts.slice(1).join('.'));
+    if (/\.(workers|pages)\.dev$/.test(u.hostname) && parts.length >= 4) return o.hostname.endsWith('.' + parts.slice(-3).join('.'));
+    return false;
+  });
+}
+
 function corsHeaders(request, env) {
   const origin = request.headers.get('Origin') || '';
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim().replace(/\/$/, '')).filter(Boolean);
   let allow = '*';
-  if (allowed.length) allow = allowed.includes(origin) ? origin : allowed[0];
+  if (allowed.length) allow = originAllowed(origin, allowed) ? origin : allowed[0];
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',

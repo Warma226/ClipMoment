@@ -1,0 +1,12 @@
+// Mise en ligne du SITE sur Cloudflare Workers (fichiers statiques du dossier web/).
+// Le nom doit être identique au nom du Worker dans le tableau de bord Cloudflare.
+// Chaque envoi sur la branche main redéploie le site automatiquement (Workers Builds).
+{
+  "name": "clipmoment2",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./web",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
