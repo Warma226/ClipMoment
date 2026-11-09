@@ -97,7 +97,16 @@
     };
   }
 
-  const backend = DEMO ? window.CMMock.backend() : realBackend();
+  // Si la bibliothèque Supabase n'a pas pu se charger (réseau faible), le site reste utilisable et affiche une erreur claire.
+  function offlineBackend() {
+    const down = async () => { const e = new Error('RESEAU'); e.code = 'RESEAU'; throw e; };
+    return {
+      auth: { session: async () => null, onChange() {}, signIn: down, signUp: down, signOut: async () => {}, reset: down, updatePassword: down },
+      db: { profile: down, projects: down, project: down, updateProject: down, deleteProject: down, creditHistory: down, settings: down, rpc: down },
+      api: down,
+    };
+  }
+  const backend = DEMO ? window.CMMock.backend() : (window.supabase && window.supabase.createClient ? realBackend() : offlineBackend());
 
   async function loadSettings() {
     try { return await backend.db.settings(); } catch (e) { return {}; }

@@ -13,7 +13,7 @@
   const FONTS = {
     quote: '"Roboto Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif',
     bold: 'Montserrat, "Arial Black", Impact, sans-serif',
-    body: '"Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+    body: 'Onest, "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   };
 
   function defaultStyle(template) {

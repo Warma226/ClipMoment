@@ -643,7 +643,7 @@
 
   /* ---------------- Démarrage ---------------- */
   if (document.fonts && document.fonts.load) {
-    Promise.all(['900 60px Montserrat', '800 40px Montserrat', '700 46px "Roboto Condensed"', '400 26px "Roboto Condensed"', '600 40px "Instrument Sans"']
+    Promise.all(['900 60px Montserrat', '800 40px Montserrat', '700 46px "Roboto Condensed"', '400 26px "Roboto Condensed"', '600 40px Onest']
       .map((f) => document.fonts.load(f).catch(() => {}))).then(() => { S.dirty = true; });
   }
   window.addEventListener('beforeunload', (e) => { if (S.analyzing || S.exporting) { e.preventDefault(); e.returnValue = ''; } });
