@@ -1,6 +1,8 @@
 /**
  * ClipMoment — API (Cloudflare Worker, fichier unique, aucune compilation).
  *
+ * Ce même fichier tourne aussi comme Edge Function Supabase (voir supabase/functions/clipmoment-api).
+ *
  * Rôle : garder les clés secrètes hors du navigateur, vérifier la session du client,
  * débiter ses crédits, puis relayer vers Groq (transcription Whisper + IA qui choisit les moments).
  *
@@ -21,8 +23,10 @@ export default {
     const cors = corsHeaders(request, env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const url = new URL(request.url);
+    // Sur Supabase, l'adresse contient /functions/v1/clipmoment-api : on garde seulement la route.
+    const path = url.pathname.replace(/^.*\/clipmoment-api(?=\/|$)/, '') || '/';
     try {
-      if (url.pathname === '/health') {
+      if (path === '/health') {
         return json({ ok: true, stt: sttModel(env), llm: llmModel(env), configured: isConfigured(env) }, 200, cors);
       }
       if (!isConfigured(env)) return json({ error: 'API_NON_CONFIGUREE' }, 500, cors);
@@ -31,7 +35,7 @@ export default {
       const user = await getUser(request, env);
       if (!user) return json({ error: 'NON_CONNECTE' }, 401, cors);
 
-      switch (url.pathname) {
+      switch (path) {
         case '/analyze/start': return await startAnalysis(request, env, user, cors);
         case '/analyze/cancel': return await cancelAnalysis(request, env, user, cors);
         case '/transcribe': return await transcribe(request, env, user, url, cors);

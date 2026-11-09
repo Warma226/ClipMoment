@@ -12,7 +12,7 @@ Plateforme qui transforme des vidéos longues (interviews, podcasts, lives, cour
 **Coût de départ : 0 F.** Tout tourne sur des offres gratuites, sans carte bancaire. Le montage et l'export vidéo se font dans le téléphone du client, donc il n'y a aucun serveur vidéo à payer.
 
 ```
-Téléphone du client (site web)        Cloudflare Worker (API)           Services
+Téléphone du client (site web)        API (Edge Function Supabase)      Services
   ├─ lit l'audio, le découpe     ───►   vérifie la session    ───►   Groq : Whisper + IA
   ├─ monte et exporte le clip           débite les crédits    ───►   Supabase : comptes, crédits, projets
   └─ comptes, projets  ───────────────────────────────────────────►   Supabase
@@ -46,7 +46,19 @@ Tu vas créer 3 comptes gratuits : **Supabase**, **Groq** et **Cloudflare**. Les
 1. Va sur [console.groq.com](https://console.groq.com) et crée un compte.
 2. **API Keys** → **Create API Key** → copie la clé (`gsk_…`).
 
-### Étape 3 — Cloudflare Worker (l'API)
+### Étape 3 — L'API (Edge Function Supabase) ✅ déjà déployée
+
+L'API tourne comme **Edge Function Supabase** `clipmoment-api` (code : [`supabase/functions/clipmoment-api`](supabase/functions/clipmoment-api)). Supabase lui fournit lui-même son adresse et ses clés. Il ne reste **qu'un secret à ajouter** :
+
+1. Supabase → **Edge Functions** → **Secrets** (ou **Manage secrets**).
+2. Ajoute `GROQ_API_KEY` = ta clé Groq → **Save**.
+3. Plus tard, quand le site est en ligne : ajoute `ALLOWED_ORIGINS` = l'adresse du site (ex. `https://clipmoment.pages.dev`).
+
+Vérification : `https://kxkogpqtixqatufmxigv.supabase.co/functions/v1/clipmoment-api/health` doit afficher `"configured":true`.
+
+### Étape 3 bis (alternative) — Cloudflare Worker
+
+Seulement si tu préfères héberger l'API chez Cloudflare plutôt que chez Supabase.
 
 1. Va sur [dash.cloudflare.com](https://dash.cloudflare.com) et crée un compte.
 2. **Workers & Pages** (ou **Compute**) → **Create** → **Create Worker** → nom `clipmoment-api` → **Deploy**.
@@ -63,9 +75,9 @@ Tu vas créer 3 comptes gratuits : **Supabase**, **Groq** et **Cloudflare**. Les
 
 5. Note l'adresse du Worker, ex. `https://clipmoment-api.tonnom.workers.dev`. En ouvrant `…/health`, tu dois voir `"configured":true`.
 
-### Étape 4 — Relier le site
+### Étape 4 — Relier le site ✅ déjà fait
 
-Sur GitHub, ouvre `web/assets/config.js`, touche le crayon ✏️, remplis :
+`web/assets/config.js` contient déjà l'adresse Supabase, la clé publique et l'adresse de l'API. Si tu changes de projet un jour, modifie ces lignes :
 
 ```js
 SUPABASE_URL: 'https://xxxx.supabase.co',

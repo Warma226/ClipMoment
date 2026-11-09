@@ -101,3 +101,13 @@ r = await worker.fetch(req('/analyze/cancel', { project_id: PID }), env);
 assert.equal((await r.json()).refunded, 2);
 
 console.log('Tous les tests de l\'API passent (' + calls.length + ' appels simulés).');
+
+// Le chemin Supabase (/functions/v1/clipmoment-api/...) doit aussi fonctionner.
+r = await worker.fetch(new Request('https://x.supabase.co/functions/v1/clipmoment-api/health'), env);
+assert.equal((await r.json()).ok, true);
+r = await worker.fetch(new Request('https://x.supabase.co/clipmoment-api/analyze/start', { method: 'POST', headers: { Authorization: 'Bearer good', 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds: 60 }) }), env);
+assert.equal(r.status, 200);
+// La copie de l'Edge Function doit être identique au Worker.
+import { readFileSync } from 'node:fs';
+assert.equal(readFileSync(new URL('../supabase/functions/clipmoment-api/api.js', import.meta.url), 'utf8'), readFileSync(new URL('../worker/worker.js', import.meta.url), 'utf8'));
+console.log('Chemins Supabase et copie de l\'Edge Function : OK.');
