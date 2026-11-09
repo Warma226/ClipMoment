@@ -112,7 +112,12 @@ details.sec summary { cursor: pointer; font-weight: 600; }
 .hist li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
 .hist .plus { color: var(--ok); font-family: var(--mono); }
 .hist .minus { color: var(--muted); font-family: var(--mono); }
-@media (max-width: 480px) { .bar .wrap { gap: 6px; } .bar .logo { font-size: 18px; } .bar .btn.small { padding: 6px 8px; } .card .act { padding: 0 10px 10px; } .card .body { padding: 10px; } .card .why { display: none; } }
+.pill .coin { width: 17px; height: 17px; color: var(--accent); }
+.bar .wrap > * { flex-shrink: 0; }
+.bar .spacer { flex: 1 1 0; min-width: 0; }
+@media (max-width: 480px) { .pill .lab { display: none; } .pill { padding: 7px 10px; } }
+@media (max-width: 360px) { .bar .logo span { display: none; } }
+@media (max-width: 480px) { .bar .wrap { gap: 4px; } .bar .logo { font-size: 18px; } .bar .btn.small { padding: 6px 9px; } .card .act { padding: 0 10px 10px; } .card .body { padding: 10px; } .card .why { display: none; } }
 .logoprev { width: 120px; height: 56px; border-radius: 10px; background: repeating-conic-gradient(var(--sunk) 0 25%, var(--surface) 0 50%) 0 0/14px 14px;
   display: grid; place-items: center; overflow: hidden; border: 1px solid var(--line); }
 .logoprev img { max-width: 100%; max-height: 100%; }
@@ -123,7 +128,7 @@ details.sec summary { cursor: pointer; font-weight: 600; }
   <div class="wrap">
     <a class="logo" href="index.html"><i aria-hidden="true"></i><span data-brand>ClipMoment</span></a>
     <span class="spacer"></span>
-    <button class="pill" id="credits-btn" type="button" hidden><span>Crédits</span><b id="credits">0</b></button>
+    <button class="pill" id="credits-btn" type="button" hidden aria-label="Mes crédits"><svg class="coin" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6.5v7M7.8 8.2c0-1 1-1.7 2.2-1.7s2.2.6 2.2 1.6c0 2.2-4.4 1.2-4.4 3.5 0 1 1 1.6 2.2 1.6s2.2-.7 2.2-1.7"/></svg><span class="lab">Crédits</span><b id="credits">0</b></button>
     <a class="btn ghost small" id="admin-link" href="admin.html" hidden>Admin</a>
     <button class="btn ghost small" id="logout" type="button" hidden>Quitter</button>
   </div>

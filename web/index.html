@@ -97,8 +97,9 @@ body { overflow-x: hidden; }
 @media (prefers-color-scheme: dark) { .rating { color: #EAF1FB; } }
 @media (max-width: 400px) { .nav .login { display: none; } }
 @media (max-width: 560px) {
-  .f-score { left: -2%; top: 24%; padding: 9px 11px; } .f-score .big { font-size: 18px; }
-  .f-caps { right: -4%; top: 52%; width: 146px; padding: 10px; }
+  .f-score { left: 0; top: 24%; padding: 9px 11px; } .f-score .big { font-size: 18px; }
+  .f-caps { right: 0; top: 54%; width: 132px; padding: 9px; }
+  .f-caps .w span { font-size: 10px; padding: 4px 6px; }
   .f-swap { right: 4%; top: 12%; }
   .rating { display: none; }
 }
@@ -364,7 +365,7 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
   document.getElementById('fold-mins').textContent = tp.credits + ' minutes de vidéo à analyser';
   const w = Number(s.welcome_credits) || 0;
   if (w) {
-    document.getElementById('cta').textContent = 'Essayer gratuitement · ' + w + ' min offertes';
+    document.getElementById('cta').textContent = 'Essayer gratuitement';
     document.getElementById('rating-n').textContent = w + ' min';
     document.getElementById('price-sub').textContent = '1 crédit = 1 minute de vidéo analysée. Le montage et les exports sont illimités. ' + w + ' minutes offertes à l\'inscription.';
   } else document.getElementById('rating').hidden = true;
