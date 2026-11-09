@@ -64,6 +64,9 @@ body { overflow-x: hidden; }
 .screen .person .neck { bottom: 44%; width: 18%; height: 10%; background: #B9826A; border-radius: 30%; }
 .screen .person .head { top: 8%; width: 44%; aspect-ratio: 1/1.18; border-radius: 48%; background: #C88F72; }
 .screen .person .hair { top: 5%; width: 47%; aspect-ratio: 1/.46; background: #2A2220; border-radius: 50% 50% 28% 28%; }
+.screen .demo-vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; opacity: 0; transition: opacity .6s; }
+.screen .demo-vid.ready { opacity: 1; }
+.screen .shade { position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(0, 0, 0, .55)); pointer-events: none; }
 .screen .tv { position: absolute; top: 11%; right: 7%; background: #fff; color: var(--accent); font: italic 900 9.5px/1 Montserrat, sans-serif; padding: 4px 6px; }
 .screen .quote { position: absolute; left: 6%; right: 6%; top: 58%; display: flex; flex-direction: column; align-items: flex-start; }
 .screen .quote span { background: #fff; color: #0B0B0B; font: 700 14px/1.26 "Roboto Condensed", "Arial Narrow", sans-serif; padding: 1px 6px; }
@@ -209,6 +212,14 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
           <div class="screen">
             <div class="stripes"></div>
             <div class="person"><i class="body"></i><i class="shirt"></i><i class="neck"></i><i class="head"></i><i class="hair"></i></div>
+            <!-- Vidéo libre de droits (Mixkit, licence gratuite, usage commercial autorisé, sans attribution).
+                 Pour ne plus dépendre de Mixkit, dépose le fichier dans web/assets/demo-clip.mp4 : il sera lu en premier. -->
+            <video class="demo-vid" id="demo-vid" autoplay muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1">
+              <source src="assets/demo-clip.mp4" type="video/mp4">
+              <source src="https://assets.mixkit.co/videos/2960/2960-720.mp4" type="video/mp4">
+              <source src="https://assets.mixkit.co/videos/2960/2960-360.mp4" type="video/mp4">
+            </video>
+            <div class="shade"></div>
             <span class="tv">TA CHAÎNE</span>
             <div class="quote"><span>« Personne ne t'explique ça,</span><span>c'est pour ça que tu</span><span>n'avances PAS ! »</span><small>Le conseil cash du coach</small></div>
             <div class="cap">PERSONNE <b>NE</b> T'EXPLIQUE</div>
@@ -324,6 +335,14 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 <script src="assets/core.js"></script>
 <script>
+(function () {
+  const v = document.getElementById('demo-vid');
+  if (!v) return;
+  const show = () => v.classList.add('ready');
+  v.addEventListener('playing', show); v.addEventListener('loadeddata', show);
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { v.removeAttribute('autoplay'); v.pause(); }
+  else { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+})();
 (async function () {
   document.querySelectorAll('[data-brand]').forEach((n) => { n.textContent = CM.brand; });
   document.getElementById('year').textContent = new Date().getFullYear();
