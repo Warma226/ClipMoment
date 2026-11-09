@@ -2,11 +2,13 @@
 
 Plateforme qui transforme des vidéos longues (interviews, podcasts, lives, cours) en **clips verticaux 9:16** prêts pour TikTok, Reels et Shorts, à la manière d'OpusClip.
 
+- **Import par fichier ou par lien** (YouTube, Facebook, Instagram, TikTok, X, Vimeo, Dailymotion) via Apify.
 - **Transcription mot par mot** (Whisper via Groq).
-- **L'IA choisit les moments viraux**, écrit un titre-citation et donne une note sur 100.
+- **L'IA choisit les moments viraux et fait le montage** : elle raccorde plusieurs passages (accroche, explication, chute), écarte les digressions et répétitions, écrit un titre-citation et donne une note sur 100.
+- **Silences et hésitations supprimés** (« euh », « hum »…) au mot près ; chaque passage peut être retiré ou remis dans l'éditeur.
 - **3 gabarits** : *Citation* (bandes blanches façon chaîne TV), *Sous-titres animés* (mot par mot), *Sobre*.
 - **Cadrage vertical qui suit le visage**, ou fond flou, ou réglage manuel.
-- **Ta marque** : logo, couleur, signature.
+- **Ta marque** : logo (position, taille, opacité) enregistré dans le compte, couleur, signature.
 - **Comptes clients, crédits** (1 crédit = 1 minute analysée) et **page admin** pour créditer après un paiement Orange Money ou Wave.
 
 **Coût de départ : 0 F.** Tout tourne sur des offres gratuites, sans carte bancaire. Le montage et l'export vidéo se font dans le téléphone du client, donc il n'y a aucun serveur vidéo à payer.
@@ -103,6 +105,16 @@ puis **Commit changes**.
    ```
 3. Ouvre `/admin.html` : tu peux créditer les clients, changer les packs, les prix et tes numéros Orange Money / Wave.
 
+### Étape 7 (facultative) — Import par lien YouTube / Facebook
+
+1. Crée un compte gratuit sur [apify.com](https://apify.com) (le plan gratuit offre environ 5 $ de crédit par mois, soit une quinzaine d'imports).
+2. Apify → **Settings** → **API & Integrations** → copie ton **Personal API token**.
+3. Supabase → **Edge Functions** → **Secrets** → ajoute `APIFY_TOKEN` = ce jeton.
+4. Chaque import coûte au client **3 crédits** (réglable dans `/admin.html`), rendus automatiquement si l'import échoue.
+
+Le service utilisé est l'acteur Apify `agentx~all-video-scraper` (environ 0,28 $ par vidéo sur le plan gratuit). Pour en changer, ajoute le secret `APIFY_ACTOR`.
+Rappelle à tes clients de n'importer que des vidéos qu'ils ont le droit de réutiliser.
+
 ---
 
 ## Vendre
@@ -116,7 +128,7 @@ puis **Commit changes**.
 
 | Limite | Pourquoi | Prévu |
 |---|---|---|
-| Import de fichier seulement, pas de lien YouTube | YouTube bloque les téléchargements depuis les serveurs | v2 |
+| Import par lien : quelques imports gratuits par mois | Passe par Apify (offre gratuite limitée) | Recharger Apify quand les ventes suivent |
 | 30 min max par analyse (réglable jusqu'à 120) | Le décodage audio se fait dans le téléphone, qui a peu de mémoire | v2 : lecture en flux |
 | Export en temps réel | L'enregistrement se fait pendant la lecture | v2 : export accéléré (WebCodecs) |
 | Quota Groq gratuit (quelques heures d'audio par jour) | Offre gratuite | Passer au plan payant Groq quand les ventes suivent |
@@ -128,6 +140,8 @@ puis **Commit changes**.
 
 ```
 supabase/schema.sql   base de données, sécurité, crédits, fonctions admin
+supabase/migration_v2_logo_liens.sql   logo enregistré dans le compte + import par lien
+supabase/functions/clipmoment-api      l'API déployée sur Supabase (copie de worker/worker.js)
 worker/worker.js      API (Cloudflare Worker, un seul fichier)
 web/                  site statique (Cloudflare Pages)
   index.html          page de vente

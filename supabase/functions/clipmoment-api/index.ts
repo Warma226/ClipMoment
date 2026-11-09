@@ -16,6 +16,8 @@ const env = {
   ALLOWED_ORIGINS: Deno.env.get('ALLOWED_ORIGINS') || '',
   GROQ_STT_MODEL: Deno.env.get('GROQ_STT_MODEL') || '',
   GROQ_LLM_MODEL: Deno.env.get('GROQ_LLM_MODEL') || '',
+  APIFY_TOKEN: Deno.env.get('APIFY_TOKEN') || '',
+  APIFY_ACTOR: Deno.env.get('APIFY_ACTOR') || '',
 };
 
 Deno.serve((req: Request) => api.fetch(req, env));

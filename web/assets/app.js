@@ -98,6 +98,7 @@
     $('#admin-link').hidden = !S.profile.is_admin;
     S.settings = await CM.loadSettings();
     $('#max-tag').textContent = (Number(S.settings.max_minutes) || 30) + ' min max';
+    $('#link-fee').textContent = String(S.settings.link_fee != null ? Number(S.settings.link_fee) : 3);
     loadBrand();
     show('home');
     renderProjects();
@@ -167,6 +168,77 @@
   drop.addEventListener('drop', (e) => { const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) pickFile(f); });
   $('#start').addEventListener('click', () => { if ($('#start').dataset.mode === 'recharge') openCredits(); else startAnalysis(); });
 
+  /* ---------------- Import par lien ---------------- */
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  function setSrc(mode) {
+    $('#link-pane').hidden = mode !== 'link';
+    $('#drop').hidden = mode === 'link' || !!S.meta;
+    $('#picked').hidden = mode === 'link' || !S.meta;
+  }
+  $$('input[name=src]').forEach((r) => r.addEventListener('change', () => setSrc(r.value)));
+  const linkErr = (m) => { const n = $('#link-err'); n.textContent = m || ''; n.hidden = !m; };
+  const linkProg = (txt, p) => { $('#link-prog').hidden = false; $('#link-txt').textContent = txt; if (p != null) $('#link-bar').style.width = (clamp(p, 0, 1) * 100).toFixed(1) + '%'; };
+  let linkBusy = false;
+  async function importLink() {
+    if (linkBusy) return;
+    const url = $('#link-url').value.trim();
+    linkErr('');
+    if (!/^https?:\/\//i.test(url)) { linkErr('Colle le lien complet de la vidéo (il commence par https://).'); return; }
+    linkBusy = true; $('#link-go').disabled = true;
+    try {
+      linkProg('Demande envoyée…', 0.03);
+      const st = await CM.api('/link/start', { json: { url, quality: 'medium' } });
+      setCredits(st.credits);
+      const t0 = Date.now(); let info = null;
+      for (;;) {
+        await sleep(4000);
+        const sec = Math.round((Date.now() - t0) / 1000);
+        if (sec > 15 * 60) throw new Error('La récupération prend trop de temps. Réessaie plus tard ou importe le fichier.');
+        info = await CM.api('/link/status', { json: { import_id: st.import_id } });
+        if (info.status === 'pret') break;
+        if (info.status === 'echec') {
+          if (info.credits != null) setCredits(info.credits);
+          throw new Error('La vidéo n\'a pas pu être récupérée : lien privé, supprimé ou protégé.' + (info.refunded ? ' Tes ' + info.refunded + ' crédits ont été rendus.' : ''));
+        }
+        linkProg('Nos serveurs récupèrent la vidéo… ' + fmtTime(sec), Math.min(0.45, 0.05 + sec / 400));
+      }
+      const blob = await downloadImport(st.import_id, info.file_size, (got, total) => {
+        linkProg('Transfert vers ton téléphone… ' + (got / 1048576).toFixed(1) + (total ? ' / ' + (total / 1048576).toFixed(1) : '') + ' Mo', 0.5 + (total ? 0.5 * got / total : 0.2));
+      });
+      const name = String(info.title || 'video').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) + '.mp4';
+      const file = new File([blob], name, { type: blob.type || 'video/mp4' });
+      $('#link-prog').hidden = true; $('#link-url').value = '';
+      $('#src-file').checked = true; setSrc('file');
+      await pickFile(file);
+      toast('Vidéo récupérée. Lance l\'analyse.');
+    } catch (e) {
+      $('#link-prog').hidden = true;
+      linkErr(e.code ? errMsg(e) : (e.message || errMsg(e)));
+    } finally { linkBusy = false; $('#link-go').disabled = false; }
+  }
+  async function downloadImport(id, size, onp) {
+    const CH = 8 * 1024 * 1024, parts = [];
+    let pos = 0, total = Number(size) || 0;
+    for (;;) {
+      let res = null, err = null;
+      for (let a = 0; a < 3 && !res; a++) {
+        try { res = await CM.apiRaw('/link/file?import_id=' + encodeURIComponent(id), { headers: { Range: 'bytes=' + pos + '-' + (pos + CH - 1) } }); }
+        catch (e) { err = e; await sleep(1500 * (a + 1)); }
+      }
+      if (!res) throw err;
+      const buf = await res.arrayBuffer();
+      parts.push(buf); pos += buf.byteLength;
+      if (res.status === 200) { onp(pos, pos); break; }
+      const m = /\/(\d+)\s*$/.exec(res.headers.get('Content-Range') || '');
+      if (m) total = Number(m[1]);
+      onp(pos, total);
+      if (!buf.byteLength || (total && pos >= total)) break;
+    }
+    return new Blob(parts, { type: 'video/mp4' });
+  }
+  $('#link-go').addEventListener('click', importLink);
+  $('#link-url').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); importLink(); } });
+
   /* ---------------- Projets ---------------- */
   async function renderProjects() {
     const box = $('#projects'); box.textContent = '';
@@ -195,8 +267,35 @@
 
   function setProject(p) {
     S.project = p;
-    S.clips = (p.clips || []).map((c, i) => Object.assign({ id: c.id || 'c' + i }, c, { style: Object.assign(R.defaultStyle(c.style && c.style.template), c.style || {}) }));
+    S.clips = (p.clips || []).map((c, i) => {
+      const x = Object.assign({ id: c.id || 'c' + i }, c, { style: Object.assign(R.defaultStyle(c.style && c.style.template), c.style || {}) });
+      if (!Array.isArray(x.parts) || !x.parts.length) x.parts = (Array.isArray(x.segments) && x.segments.length ? x.segments : [[x.start, x.end]]).map(([a, b]) => ({ s: a, e: b, on: true }));
+      if (x.style.track && x.style.trackV !== 2) x.style.track = null; // ancien format de suivi
+      return prep(x);
+    });
   }
+
+  /* ---------------- Montage : morceaux lus dans l'ordre ---------------- */
+  // Calcule les morceaux réellement lus (passages gardés, sans silences ni hésitations) et la durée finale.
+  function prep(c) {
+    c._pieces = E.computePieces(c.parts, words(), { cutSilence: c.style.cutSilence !== false, cutFillers: c.style.cutFillers !== false });
+    c._dur = Math.max(0.1, E.piecesDuration(c._pieces));
+    c.start = Math.min.apply(null, c._pieces.map((q) => q[0]));
+    c.end = Math.max.apply(null, c._pieces.map((q) => q[1]));
+    return c;
+  }
+  // Mots affichés en sous-titres : ceux des morceaux lus, sans les hésitations coupées.
+  function clipWords(c) {
+    const P = c._pieces, cutF = c.style.cutFillers !== false;
+    return words().filter((w) => P.some((q) => w[1] >= q[0] - 0.05 && w[2] <= q[1] + 0.05) && !(cutF && E.isFiller(w[0])));
+  }
+  function before(c, i) { let a = 0; for (let k = 0; k < i; k++) a += c._pieces[k][1] - c._pieces[k][0]; return a; }
+  function srcAt(c, rel) {
+    const P = c._pieces; let acc = 0;
+    for (let i = 0; i < P.length; i++) { const d = P[i][1] - P[i][0]; if (rel < acc + d || i === P.length - 1) return { i, t: P[i][0] + clamp(rel - acc, 0, d) }; acc += d; }
+    return { i: 0, t: P[0][0] };
+  }
+  function pieceOf(c, t) { const i = c._pieces.findIndex((q) => t >= q[0] - 0.05 && t <= q[1] + 0.05); return i; }
 
   /* ---------------- Analyse ---------------- */
   function step(name, state, detail) {
@@ -251,7 +350,9 @@
       let clips = res.clips, fallback = false;
       if (!clips.length) { clips = E.energyMoments(feat, duration, opts); fallback = true; }
       clips = clips.map((c, i) => {
-        const x = E.snapToWords(Object.assign({}, c), tr.words, duration);
+        const x = Object.assign({}, c);
+        const segs = E.snapSegments(Array.isArray(c.segments) && c.segments.length ? c.segments : [[c.start, c.end]], tr.words, duration);
+        x.parts = (segs.length ? segs : [[c.start, c.end]]).map(([a, b]) => ({ s: a, e: b, on: true }));
         x.id = 'c' + Date.now().toString(36) + i;
         x.style = R.defaultStyle(opts.template);
         if (!x.title && opts.template === 'citation') x.style.captions = true;
@@ -260,9 +361,10 @@
       step('ai', 'done', clips.length + ' clips' + (fallback ? ' (choisis d\'après le son)' : '')); anBar(1);
 
       const transcript = { language: tr.language, words: tr.words, segments: tr.segments };
+      S.project = { transcript };
       const project = { id: pid, title: S.file.name.replace(/\.[^.]+$/, ''), file_name: S.file.name, file_size: S.file.size, duration, language: tr.language, transcript, clips, status: 'pret' };
       setProject(project);
-      try { await CM.db.updateProject(pid, { transcript, clips: S.clips, status: 'pret', language: tr.language }); }
+      try { await CM.db.updateProject(pid, { transcript, clips: cleanClips(), status: 'pret', language: tr.language }); }
       catch (e) { toast('Les clips sont prêts mais n\'ont pas pu être enregistrés en ligne : ' + errMsg(e), 'err'); }
       S.analyzing = null;
       if (fallback) toast(tr.words.length < 15 ? 'Peu de paroles détectées : les clips ont été choisis d\'après le son.' : errMsg({ code: 'ERREUR_IA' }));
@@ -301,7 +403,7 @@
     const box = $('#cards'); box.textContent = '';
     S.clips.forEach((c, i) => {
       const cv = el('canvas', { width: 270, height: 480, 'aria-hidden': 'true' });
-      const len = c.end - c.start;
+      const len = c._dur, n = c.parts.filter((q) => q.on).length;
       box.appendChild(el('article', { class: 'card' }, [
         el('button', { class: 'thumb', type: 'button', 'aria-label': 'Modifier le clip ' + (i + 1), onclick: () => openEditor(i) }, [
           cv,
@@ -310,7 +412,7 @@
         ]),
         el('div', { class: 'body' }, [
           el('span', { class: 't', text: c.title || c.hook || 'Clip ' + (i + 1) }),
-          el('span', { class: 'muted small mono', text: fmtTime(c.start) + ' → ' + fmtTime(c.end) }),
+          el('span', { class: 'muted small mono', text: n > 1 ? n + ' passages raccordés · ' + fmtTime(c.start) + ' → ' + fmtTime(c.end) : fmtTime(c.start) + ' → ' + fmtTime(c.end) }),
           c.reason ? el('span', { class: 'why', text: c.reason }) : null,
         ]),
         el('div', { class: 'act' }, [el('button', { class: 'btn small', type: 'button', text: 'Modifier', onclick: () => openEditor(i) })]),
@@ -334,12 +436,12 @@
     try {
       for (const c of S.clips) {
         if (job !== thumbJob) return;
-        const t = c.start + Math.min(1.2, (c.end - c.start) / 3);
+        const p0 = c._pieces[0], t = p0[0] + Math.min(1.2, (p0[1] - p0[0]) / 3);
         if (v && v.videoWidth) {
           await new Promise((r) => { const d = () => { v.removeEventListener('seeked', d); clearTimeout(to); r(); }; const to = setTimeout(d, 2500); v.addEventListener('seeked', d); try { v.currentTime = t; } catch (e) { d(); } });
         }
-        const groups = R.buildGroups(words(), c.start, c.end, c.style.template);
-        R.draw(bctx, v, v ? v.videoWidth : 0, v ? v.videoHeight : 0, c, groups, t, S.brand);
+        const groups = R.buildGroups(clipWords(c), c.start, c.end, c.style.template);
+        R.draw(bctx, v, v ? v.videoWidth : 0, v ? v.videoHeight : 0, c, groups, t, S.brand, t - p0[0], c._dur);
         const tc = c._thumb.getContext('2d');
         tc.drawImage(big, 0, 0, c._thumb.width, c._thumb.height);
       }
@@ -358,12 +460,14 @@
   });
 
   /* ---------------- Sauvegarde ---------------- */
+  function cleanClips() {
+    return S.clips.map((c) => { const o = {}; for (const k in c) if (k[0] !== '_') o[k] = c[k]; o.style = Object.assign({}, c.style); delete o.style._noDetector; return o; });
+  }
   function scheduleSave() {
     clearTimeout(S.saveTimer);
     S.saveTimer = setTimeout(async () => {
       if (!S.project) return;
-      const clips = S.clips.map((c) => { const o = Object.assign({}, c); delete o._thumb; return o; });
-      try { await CM.db.updateProject(S.project.id, { clips }); } catch (e) { toast('Modifications non enregistrées : ' + errMsg(e), 'err'); }
+      try { await CM.db.updateProject(S.project.id, { clips: cleanClips() }); } catch (e) { toast('Modifications non enregistrées : ' + errMsg(e), 'err'); }
     }, 1200);
   }
 
@@ -371,7 +475,49 @@
   const vid = $('#vid'), cv = $('#cv'), ctx = cv.getContext('2d');
   const cur = () => S.clips[S.sel];
 
-  function regroup() { const c = cur(); S.groups = c ? R.buildGroups(words(), c.start, c.end, c.style.template) : []; renderCapEdit(); S.dirty = true; }
+  function regroup() { const c = cur(); S.groups = c ? R.buildGroups(clipWords(c), c.start, c.end, c.style.template) : []; renderCapEdit(); S.dirty = true; }
+  function seekPiece(i, off) {
+    const c = cur(); if (!c || !S.url) return;
+    S.pi = clamp(i, 0, c._pieces.length - 1);
+    try { vid.currentTime = c._pieces[S.pi][0] + (off || 0); } catch (e) { /* attente des métadonnées */ }
+  }
+  // Après un changement du montage : nouveaux morceaux, sous-titres, cadrage, durée.
+  function remontage() {
+    const c = cur(); if (!c) return;
+    prep(c); c.style.track = null;
+    updTrim(); regroup(); renderMontage(); scheduleSave();
+    if (S.url) { vid.pause(); seekPiece(0); }
+    maybeFraming();
+  }
+  function renderMontage() {
+    const c = cur(); if (!c) return;
+    $('#mt-silence').checked = c.style.cutSilence !== false; $('#mt-fillers').checked = c.style.cutFillers !== false;
+    const on = c.parts.filter((q) => q.on), raw = on.reduce((a, q) => a + (q.e - q.s), 0), cut = Math.max(0, raw - c._dur);
+    $('#mt-dur').textContent = Math.round(c._dur) + ' s';
+    $('#mt-sum').textContent = on.length + (on.length > 1 ? ' passages raccordés' : ' passage') + (cut >= 0.5 ? ' · ' + Math.round(cut) + ' s de silences et d\'hésitations retirés' : '') + (c._pieces.length > on.length ? ' · ' + (c._pieces.length - 1) + ' raccords' : '');
+    const ol = $('#mt-parts'); ol.textContent = '';
+    const W = words();
+    c.parts.forEach((q, i) => {
+      const txt = W.filter((w) => w[1] >= q.s - 0.05 && w[2] <= q.e + 0.05).map((w) => w[0]).join(' ');
+      const cb = el('input', { type: 'checkbox', id: 'part-' + i });
+      cb.checked = !!q.on;
+      cb.addEventListener('change', () => {
+        if (!cb.checked && c.parts.filter((x) => x.on).length <= 1) { cb.checked = true; toast('Un clip doit garder au moins un passage.'); return; }
+        q.on = cb.checked; remontage();
+      });
+      const play = el('button', { class: 'btn small ghost', type: 'button', 'aria-label': 'Écouter le passage ' + (i + 1), text: '▶' });
+      play.addEventListener('click', () => {
+        if (!S.url || S.exporting) return;
+        const k = c._pieces.findIndex((x) => x[0] >= q.s - 0.2 && x[1] <= q.e + 0.2);
+        if (k < 0) { toast('Ce passage est retiré du clip.'); return; }
+        ensureAudio(); seekPiece(k); vid.play().catch(() => {});
+      });
+      ol.appendChild(el('li', { class: q.on ? '' : 'off' }, [
+        el('label', { for: 'part-' + i }, [cb, el('span', { class: 'pn', text: String(i + 1) }),
+          el('span', { class: 'ptx' }, [el('b', { text: fmtTime(q.s) + ' · ' + Math.round(q.e - q.s) + ' s' }), el('span', { text: txt || '(sans paroles)' })])]),
+        play]));
+    });
+  }
 
   function openEditor(i) {
     S.sel = i;
@@ -387,9 +533,9 @@
     $('#fr-' + st.frame).checked = true; $('#in-manual').value = Math.round(st.manualX * 100);
     $('#result').hidden = true;
     tplFields(); frameFields();
-    regroup(); updTrim();
+    regroup(); updTrim(); renderMontage(); renderLogoPanel();
     show('editor');
-    if (S.url) { vid.pause(); try { vid.currentTime = c.start; } catch (e) { /* attente des métadonnées */ } }
+    if (S.url) { vid.pause(); seekPiece(0); }
     else toast('Resélectionne la vidéo d\'origine pour voir l\'aperçu.', 'err');
     maybeFraming();
   }
@@ -409,8 +555,9 @@
   }
   function updTrim() {
     const c = cur();
-    $('#t-start').textContent = fmtTime(c.start, true); $('#t-end').textContent = fmtTime(c.end, true);
-    $('#export').textContent = 'Exporter le clip (' + Math.round(c.end - c.start) + ' s)';
+    const P = c._pieces;
+    $('#t-start').textContent = fmtTime(P[0][0], true); $('#t-end').textContent = fmtTime(P[P.length - 1][1], true);
+    $('#export').textContent = 'Exporter le clip (' + Math.round(c._dur) + ' s)';
     $('#export').disabled = !S.url;
   }
 
@@ -420,8 +567,8 @@
     if (S.meta && S.meta.h / S.meta.w >= 1.5) return;
     const ac = new AbortController(); S.framing = ac; frameFields();
     try {
-      const r = await R.analyzeFraming(S.url, c, (p) => { $('#frame-note').textContent = 'Recherche du visage… ' + Math.round(p * 100) + ' %'; }, ac.signal);
-      if (r.track) { c.style.track = r.track; scheduleSave(); }
+      const r = await R.analyzeFraming(S.url, c, (p) => { $('#frame-note').textContent = 'Recherche du visage… ' + Math.round(p * 100) + ' %'; }, ac.signal, c._pieces);
+      if (r.track) { c.style.track = r.track; c.style.trackV = 2; scheduleSave(); }
       else if (!r.detector) c.style._noDetector = true;
     } catch (e) { /* annulé */ }
     S.framing = null; S.dirty = true;
@@ -441,7 +588,7 @@
         if (inp.value.trim() === orig) delete c.style.edits[g.key]; else c.style.edits[g.key] = inp.value;
         S.dirty = true; scheduleSave();
       });
-      inp.addEventListener('focus', () => { if (S.url && vid.paused) { try { vid.currentTime = g.start + 0.05; } catch (e) { /* */ } } });
+      inp.addEventListener('focus', () => { if (S.url && vid.paused) { const k = pieceOf(c, g.start + 0.05); if (k >= 0) { S.pi = k; try { vid.currentTime = g.start + 0.05; } catch (e) { /* */ } } } });
       box.appendChild(el('label', {}, [el('span', { class: 'mono small muted', text: fmtTime(g.start) }), inp]));
     });
   }
@@ -464,12 +611,13 @@
   $$('[data-trim]').forEach((b) => b.addEventListener('click', () => {
     const c = cur(); if (!c || S.exporting) return;
     const [k, d] = b.dataset.trim.split(':'), v = Number(d), dur = S.project.duration;
-    if (k === 'start') c.start = +clamp(c.start + v, 0, c.end - 3).toFixed(2); else c.end = +clamp(c.end + v, c.start + 3, dur).toFixed(2);
-    c.style.track = null; // le cadrage sera recalculé sur la nouvelle durée
-    updTrim(); regroup(); scheduleSave();
-    if (S.url) { vid.pause(); try { vid.currentTime = k === 'start' ? c.start : Math.max(c.start, c.end - 2); } catch (e) { /* */ } }
-    maybeFraming();
+    const on = c.parts.filter((q) => q.on), q = k === 'start' ? on[0] : on[on.length - 1];
+    if (k === 'start') q.s = +clamp(q.s + v, 0, q.e - 1).toFixed(2); else q.e = +clamp(q.e + v, q.s + 1, dur).toFixed(2);
+    remontage();
+    if (S.url && k === 'end') { const P = c._pieces; seekPiece(P.length - 1, Math.max(0, P[P.length - 1][1] - P[P.length - 1][0] - 2)); }
   }));
+  $('#mt-silence').addEventListener('change', (e) => { cur().style.cutSilence = e.target.checked; remontage(); });
+  $('#mt-fillers').addEventListener('change', (e) => { cur().style.cutFillers = e.target.checked; remontage(); });
   $('#ed-back').addEventListener('click', () => { if (S.exporting) return; if (S.framing) S.framing.abort(); openClips(); });
 
   /* ---------------- Lecture ---------------- */
@@ -489,29 +637,51 @@
     const c = cur(); if (!c || !S.url || S.exporting) return;
     ensureAudio();
     if (!vid.paused) { vid.pause(); return; }
-    if (vid.currentTime < c.start - 0.05 || vid.currentTime >= c.end - 0.1) { try { vid.currentTime = c.start; } catch (e) { /* */ } }
+    const k = pieceOf(c, vid.currentTime), P = c._pieces;
+    if (k < 0 || (k === P.length - 1 && vid.currentTime >= P[k][1] - 0.1)) seekPiece(0); else S.pi = k;
     vid.play().catch(() => toast('La lecture a été bloquée. Touche encore Lire.', 'err'));
   });
   vid.addEventListener('play', () => { S.playing = true; updPlay(); });
   vid.addEventListener('pause', () => { S.playing = false; updPlay(); S.dirty = true; });
   vid.addEventListener('seeked', () => { S.dirty = true; });
-  vid.addEventListener('loadeddata', () => { S.dirty = true; const c = cur(); if (c && S.view === 'editor' && vid.currentTime < c.start - 0.5) { try { vid.currentTime = c.start; } catch (e) { /* */ } } });
+  vid.addEventListener('loadeddata', () => { S.dirty = true; const c = cur(); if (c && S.view === 'editor' && pieceOf(c, vid.currentTime) < 0) seekPiece(0); });
   let scrubbing = false;
-  $('#scrub').addEventListener('input', (e) => { const c = cur(); if (!c || !S.url || S.exporting) return; scrubbing = true; try { vid.currentTime = c.start + e.target.value / 1000 * (c.end - c.start); } catch (err) { /* */ } });
+  $('#scrub').addEventListener('input', (e) => { const c = cur(); if (!c || !S.url || S.exporting) return; scrubbing = true; const p = srcAt(c, e.target.value / 1000 * c._dur); S.pi = p.i; try { vid.currentTime = p.t; } catch (err) { /* */ } });
   $('#scrub').addEventListener('change', () => { scrubbing = false; });
+
+  // Passe au morceau suivant du montage. Pendant l'export, l'enregistrement est mis en pause le temps du saut,
+  // pour que le raccord soit net (aucune image figée).
+  function jump(i) {
+    const c = cur(); const P = c._pieces; S.pi = i; S.jumping = true;
+    const ex = S.exporting && !S.exporting.done ? S.exporting : null;
+    if (ex) { try { if (ex.rec.state === 'recording') ex.rec.pause(); } catch (e) { /* */ } vid.pause(); }
+    const done = () => {
+      vid.removeEventListener('seeked', done); clearTimeout(to); S.jumping = false; S.dirty = true;
+      if (ex && !ex.done) { vid.play().then(() => { try { if (ex.rec.state === 'paused') ex.rec.resume(); } catch (e) { /* */ } }).catch(() => {}); }
+    };
+    const to = setTimeout(done, 4000);
+    vid.addEventListener('seeked', done);
+    try { vid.currentTime = P[i][0]; } catch (e) { done(); }
+  }
 
   let lastTc = '';
   function frame() {
     requestAnimationFrame(frame);
     if (S.view !== 'editor') return;
-    const c = cur(); if (!c) return;
-    const len = c.end - c.start;
-    const t = S.url ? vid.currentTime : c.start;
-    if (S.exporting && !S.exporting.done) { if (S.exporting.started && (t >= c.end - 0.01 || vid.ended)) finishRec(); }
-    else if (S.playing && t >= c.end - 0.03) { vid.pause(); try { vid.currentTime = c.start; } catch (e) { /* */ } }
-    const rel = clamp(t - c.start, 0, len);
+    const c = cur(); if (!c || !c._pieces) return;
+    const P = c._pieces, len = c._dur;
+    if (!(S.pi >= 0 && S.pi < P.length)) S.pi = 0;
+    const t = S.url ? vid.currentTime : P[0][0];
+    const exporting = S.exporting && !S.exporting.done;
+    if (!S.jumping && (S.playing || (exporting && S.exporting.started)) && t >= P[S.pi][1] - 0.03) {
+      if (S.pi < P.length - 1) jump(S.pi + 1);
+      else if (exporting) finishRec();
+      else { vid.pause(); seekPiece(0); }
+    }
+    if (exporting && S.exporting.started && vid.ended) finishRec();
+    const rel = clamp(before(c, S.pi) + (t - P[S.pi][0]), 0, len);
     if (S.playing || S.dirty || S.exporting) {
-      R.draw(ctx, S.url ? vid : null, S.url ? vid.videoWidth : 0, S.url ? vid.videoHeight : 0, c, S.groups, t, S.brand);
+      R.draw(ctx, S.url ? vid : null, S.url ? vid.videoWidth : 0, S.url ? vid.videoHeight : 0, c, S.groups, t, S.brand, rel, len);
       S.dirty = false;
     }
     if (S.exporting && !S.exporting.done) { $('#exp-bar').style.width = (rel / len * 100).toFixed(1) + '%'; $('#exp-txt').textContent = 'Enregistrement… ' + fmtTime(rel) + ' / ' + fmtTime(len); }
@@ -524,7 +694,7 @@
   let wake = null;
   function lockUi(on) {
     $('#exp-wrap').hidden = !on; $('#rec').hidden = !on; $('#export').disabled = on || !S.url;
-    $$('[data-trim], #play, #scrub, #ed-back, input[name=tpl], input[name=frame]').forEach((n) => { n.disabled = on; });
+    $$('[data-trim], #play, #scrub, #ed-back, input[name=tpl], input[name=frame], #mt-silence, #mt-fillers, #mt-parts input, #mt-parts button').forEach((n) => { n.disabled = on; });
   }
   async function doExport() {
     const c = cur(); if (!c || !S.url || S.exporting) return;
@@ -544,7 +714,8 @@
     S.exporting = { rec, done: false, cancelled: false };
     lockUi(true); $('#result').hidden = true; $('#exp-bar').style.width = '0%';
     try { if (navigator.wakeLock) wake = await navigator.wakeLock.request('screen'); } catch (e) { wake = null; }
-    await new Promise((r) => { const d = () => { vid.removeEventListener('seeked', d); clearTimeout(to); r(); }; const to = setTimeout(d, 4000); vid.addEventListener('seeked', d); try { vid.currentTime = c.start; } catch (e) { d(); } });
+    S.pi = 0;
+    await new Promise((r) => { const d = () => { vid.removeEventListener('seeked', d); clearTimeout(to); r(); }; const to = setTimeout(d, 4000); vid.addEventListener('seeked', d); try { vid.currentTime = c._pieces[0][0]; } catch (e) { d(); } });
     S.dirty = true;
     rec.start(500);
     try { await vid.play(); S.exporting.started = true; } catch (e) { S.exporting.cancelled = true; S.exporting.err = 'La lecture a été bloquée par le navigateur. Touche Lire une fois, puis relance l\'export.'; finishRec(); }
@@ -568,7 +739,7 @@
     $('#result').hidden = false;
     $('#result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
-  function finishRec() { const ex = S.exporting; if (!ex || ex.done) return; ex.done = true; vid.pause(); try { if (ex.rec.state !== 'inactive') ex.rec.stop(); } catch (e) { /* */ } }
+  function finishRec() { const ex = S.exporting; if (!ex || ex.done) return; ex.done = true; S.jumping = false; vid.pause(); try { if (ex.rec.state !== 'inactive') ex.rec.stop(); } catch (e) { /* */ } }
   $('#export').addEventListener('click', doExport);
   $('#exp-cancel').addEventListener('click', () => { if (S.exporting) { S.exporting.cancelled = true; finishRec(); } });
   vid.addEventListener('ended', () => { if (S.exporting && S.exporting.started) finishRec(); });
@@ -595,7 +766,7 @@
     const h = $('#hist'); h.textContent = '';
     try {
       const ev = await CM.db.creditHistory();
-      const L = { bienvenue: 'Crédits offerts', analyse: 'Analyse', recharge: 'Recharge', remboursement: 'Remboursement', correction: 'Correction' };
+      const L = { bienvenue: 'Crédits offerts', analyse: 'Analyse', import: 'Import par lien', recharge: 'Recharge', remboursement: 'Remboursement', correction: 'Correction' };
       ev.forEach((x) => h.appendChild(el('li', {}, [
         el('span', { text: (L[x.reason] || x.reason) + (x.note ? ' · ' + x.note : '') + ' · ' + new Date(x.created_at).toLocaleDateString('fr-FR') }),
         el('span', { class: x.delta > 0 ? 'plus' : 'minus', text: (x.delta > 0 ? '+' : '') + x.delta })])));
@@ -611,32 +782,58 @@
 
   /* ---------------- Marque ---------------- */
   const brandKey = () => 'cm_brand_' + (S.session ? S.session.user.id : 'x');
+  const BRAND_DEF = { highlight: '#FFE600', handle: '', progress: false, logo: '', logoPos: 'hd', logoSize: 0.24, logoOpacity: 1 };
   function loadBrand() {
     try { S.brand = JSON.parse(localStorage.getItem(brandKey())) || {}; } catch (e) { S.brand = {}; }
-    S.brand = Object.assign({ highlight: '#FFE600', handle: '', progress: false, logo: '' }, S.brand);
+    S.brand = Object.assign({}, BRAND_DEF, S.brand);
+    // Le logo est aussi enregistré dans le compte : on le récupère pour l'avoir sur tous les appareils.
+    CM.db.loadBrand().then((b) => { if (b && typeof b === 'object') { S.brand = Object.assign({}, BRAND_DEF, b); try { localStorage.setItem(brandKey(), JSON.stringify(S.brand)); } catch (e) { /* */ } S.dirty = true; renderLogoPanel(); } }).catch(() => {});
   }
-  function saveBrand() { try { localStorage.setItem(brandKey(), JSON.stringify(S.brand)); } catch (e) { toast('Logo trop lourd pour être gardé sur cet appareil.', 'err'); } S.dirty = true; }
+  let brandTimer = null;
+  function saveBrand() {
+    try { localStorage.setItem(brandKey(), JSON.stringify(S.brand)); } catch (e) { /* stockage local plein */ }
+    S.dirty = true;
+    clearTimeout(brandTimer);
+    brandTimer = setTimeout(() => { CM.db.saveBrand(S.brand).catch((e) => { if (/brand_taille/.test(String(e && e.message))) toast('Logo trop lourd. Choisis une image plus petite.', 'err'); }); }, 800);
+  }
+  function logoPreview(box) {
+    box.textContent = '';
+    if (S.brand.logo) box.appendChild(el('img', { src: S.brand.logo, alt: 'Ton logo' })); else box.appendChild(el('span', { class: 'muted small', text: 'Aucun logo' }));
+  }
   function renderBrand() {
-    const p = $('#logo-prev'); p.textContent = '';
-    if (S.brand.logo) p.appendChild(el('img', { src: S.brand.logo, alt: 'Ton logo' })); else p.appendChild(el('span', { class: 'muted small', text: 'Aucun logo' }));
+    logoPreview($('#logo-prev'));
     $('#brand-color').value = S.brand.highlight; $('#brand-handle').value = S.brand.handle; $('#brand-progress').checked = !!S.brand.progress;
   }
-  $('#brand-open').addEventListener('click', () => { renderBrand(); $('#dlg-brand').showModal(); });
-  $('#dlg-brand').addEventListener('close', () => { if (S.view === 'clips') drawThumbs(); });
-  $('#logo-file').addEventListener('change', (e) => {
-    const f = e.target.files && e.target.files[0]; e.target.value = '';
+  function renderLogoPanel() {
+    logoPreview($('#ed-logo-prev'));
+    $('#ed-logo-opts').hidden = !S.brand.logo; $('#ed-logo-del').hidden = !S.brand.logo;
+    $('#ed-logo-file').parentElement.firstChild.textContent = S.brand.logo ? 'Changer de logo' : 'Ajouter mon logo';
+    const r = $('#lp-' + (S.brand.logoPos || 'hd')); if (r) r.checked = true;
+    $('#ed-logo-size').value = Math.round((S.brand.logoSize || 0.24) * 100);
+    $('#ed-logo-op').value = Math.round((S.brand.logoOpacity || 1) * 100);
+  }
+  function setLogoFile(f) {
     if (!f) return;
     const img = new Image();
     img.onload = () => {
       const s = Math.min(1, 400 / Math.max(img.naturalWidth, img.naturalHeight));
       const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      S.brand.logo = c.toDataURL('image/png'); URL.revokeObjectURL(img.src); saveBrand(); renderBrand();
+      S.brand.logo = c.toDataURL('image/png'); URL.revokeObjectURL(img.src); saveBrand(); renderBrand(); renderLogoPanel();
+      toast('Logo ajouté à tes clips.');
     };
     img.onerror = () => toast('Cette image ne s\'ouvre pas.', 'err');
     img.src = URL.createObjectURL(f);
-  });
-  $('#logo-del').addEventListener('click', () => { S.brand.logo = ''; saveBrand(); renderBrand(); });
+  }
+  $('#ed-logo-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; setLogoFile(f); });
+  $('#ed-logo-del').addEventListener('click', () => { S.brand.logo = ''; saveBrand(); renderBrand(); renderLogoPanel(); });
+  $$('input[name=logopos]').forEach((r) => r.addEventListener('change', () => { S.brand.logoPos = r.value; saveBrand(); }));
+  $('#ed-logo-size').addEventListener('input', (e) => { S.brand.logoSize = e.target.value / 100; saveBrand(); });
+  $('#ed-logo-op').addEventListener('input', (e) => { S.brand.logoOpacity = e.target.value / 100; saveBrand(); });
+  $('#brand-open').addEventListener('click', () => { renderBrand(); $('#dlg-brand').showModal(); });
+  $('#dlg-brand').addEventListener('close', () => { if (S.view === 'clips') drawThumbs(); });
+  $('#logo-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; setLogoFile(f); });
+  $('#logo-del').addEventListener('click', () => { S.brand.logo = ''; saveBrand(); renderBrand(); renderLogoPanel(); });
   $('#brand-color').addEventListener('input', (e) => { S.brand.highlight = e.target.value; saveBrand(); });
   $('#brand-handle').addEventListener('input', (e) => { S.brand.handle = e.target.value; saveBrand(); });
   $('#brand-progress').addEventListener('change', (e) => { S.brand.progress = e.target.checked; saveBrand(); });

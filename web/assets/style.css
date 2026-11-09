@@ -65,7 +65,7 @@ img { max-width: 100%; }
 .pill b { font-family: var(--mono); font-weight: 500; }
 label.field { display: flex; flex-direction: column; gap: 6px; }
 .lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-input[type=text], input[type=email], input[type=password], input[type=number], select, textarea {
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=url], select, textarea {
   width: 100%; font: inherit; padding: 11px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 textarea { resize: vertical; min-height: 84px; }
 input[type=range], input[type=checkbox] { accent-color: var(--accent); }

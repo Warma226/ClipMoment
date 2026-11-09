@@ -170,7 +170,7 @@
   function energyMoments(feat, duration, opts) {
     const [min, max] = LENGTHS[opts.length] || LENGTHS.auto;
     const D = (min + max) / 2, f = feat.f, es = feat.es, n = f.length, w = Math.max(1, Math.round(D / HOP));
-    if (w >= n - 1) return [{ start: 0, end: duration, score: 50, title: '', context: '', hook: '', reason: 'Vidéo entière.' }];
+    if (w >= n - 1) return [{ start: 0, end: duration, segments: [[0, duration]], score: 50, title: '', context: '', hook: '', reason: 'Vidéo entière.' }];
     const P = new Float64Array(n + 1); for (let i = 0; i < n; i++) P[i + 1] = P[i] + f[i];
     const m = n - w + 1, sc = new Float32Array(m);
     for (let s = 0; s < m; s++) sc[s] = (P[s + w] - P[s]) / w;
@@ -180,8 +180,8 @@
       const e = s + w;
       if (chosen.every((c) => e + gap <= c.s || s >= c.e + gap)) { chosen.push({ s, e, v: sc[s] }); if (chosen.length >= opts.count) break; }
     }
-    return chosen.map((c) => ({ start: c.s * HOP, end: Math.min(duration, c.e * HOP), score: Math.round(clamp(c.v * 100, 1, 99)),
-      title: '', context: '', hook: '', reason: 'Passage choisi d\'après l\'intensité du son.' }));
+    return chosen.map((c) => { const st = c.s * HOP, en = Math.min(duration, c.e * HOP); return { start: st, end: en, segments: [[st, en]], score: Math.round(clamp(c.v * 100, 1, 99)),
+      title: '', context: '', hook: '', reason: 'Passage choisi d\'après l\'intensité du son.' }; });
   }
 
   // Cale le début et la fin d'un clip sur des mots entiers, avec une petite marge.
@@ -196,5 +196,42 @@
     return clip;
   }
 
-  window.CMEngine = { HOP, SR, decodeMono, energy, chunkBounds, wavBlob, transcribe, aiMoments, energyMoments, snapToWords, autoCount, LENGTHS, windows };
+  // Cale chaque morceau d'un clip sur des mots entiers.
+  function snapSegments(segments, words, duration) {
+    return segments.map(([s, e]) => { const x = snapToWords({ start: s, end: e }, words, duration); return [x.start, x.end]; })
+      .filter(([s, e]) => e - s >= 0.8);
+  }
+
+  /* ---------- Montage : silences et hésitations retirés au mot près ---------- */
+  const FILLER = /^(euh+|heu+|euhm+|hum+|hmm+|mmh*|uh+|um+|erm+|bah|ben|hein)[.,!?…]*$/i;
+  function isFiller(w) { return FILLER.test(String(w).trim()); }
+
+  function computePieces(parts, words, opt) {
+    const out = [];
+    for (const p of parts) {
+      if (!p.on) continue;
+      const ws = (words || []).filter((w) => w[2] > p.s + 0.02 && w[1] < p.e - 0.02);
+      if ((!opt.cutSilence && !opt.cutFillers) || !ws.length) { out.push([p.s, p.e]); continue; }
+      let cur = null; let first = true;
+      for (const w of ws) {
+        if (opt.cutFillers && isFiller(w[0])) { if (cur) { out.push(cur); cur = null; } continue; }
+        const a = Math.max(p.s, w[1] - (first ? 0.12 : 0.08)), b = Math.min(p.e, w[2] + 0.12);
+        first = false;
+        if (!cur) cur = [a, b];
+        else if (opt.cutSilence && a - cur[1] > 0.35) { out.push(cur); cur = [a, b]; }
+        else cur[1] = Math.max(cur[1], b);
+      }
+      if (cur) { cur[1] = Math.min(p.e, cur[1] + 0.08); out.push(cur); }
+    }
+    const merged = [];
+    for (const q of out) {
+      const last = merged[merged.length - 1];
+      if (last && q[0] >= last[0] && q[0] - last[1] < 0.06) last[1] = Math.max(last[1], q[1]);
+      else if (q[1] - q[0] >= 0.2) merged.push([+q[0].toFixed(2), +q[1].toFixed(2)]);
+    }
+    return merged.length ? merged : parts.filter((p) => p.on).map((p) => [p.s, p.e]);
+  }
+  const piecesDuration = (P) => P.reduce((s, q) => s + (q[1] - q[0]), 0);
+
+  window.CMEngine = { HOP, SR, decodeMono, energy, chunkBounds, wavBlob, transcribe, aiMoments, energyMoments, snapToWords, snapSegments, computePieces, piecesDuration, isFiller, autoCount, LENGTHS, windows };
 })();

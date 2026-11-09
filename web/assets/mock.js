@@ -94,6 +94,8 @@
         const u = me(); return S.events.filter((e) => e.user_id === u.id).slice().reverse().slice(0, 30);
       },
       async settings() { return JSON.parse(JSON.stringify(S.settings)); },
+      async loadBrand() { return me().brand || null; },
+      async saveBrand(brand) { me().brand = brand; save(); return null; },
       async rpc(name, a) {
         const u = me();
         if (!u.is_admin) fail('ACCES_REFUSE');
@@ -122,8 +124,10 @@
         fail('Fonction inconnue');
       },
     },
+    async apiRaw() { fail('IMPORT_DEMO', 400); },
     async api(path, opts) {
       opts = opts || {};
+      if (path.startsWith('/link/')) { await wait(300); fail('IMPORT_DEMO', 400); }
       const u = me();
       await wait(300);
       if (path === '/analyze/start') {
@@ -164,7 +168,9 @@
           if (e - s >= j.min * 0.8) {
             const words = segs[i][2].split(' ');
             const key = words.reduce((a, b) => (b.length > a.length ? b : a), '');
-            out.push({ start: s, end: e, title: '« ' + segs[i][2].replace(key, key.toUpperCase()) + ' »',
+            const mid = Math.max(i + 1, Math.floor((i + k) / 2));
+            const segments = mid < k ? [[s, segs[mid - 1][1]], [segs[mid + 1] ? segs[mid + 1][0] : segs[mid][0], e]] : [[s, e]];
+            out.push({ start: s, end: e, segments, title: '« ' + segs[i][2].replace(key, key.toUpperCase()) + ' »',
               context: 'Extrait de la vidéo (mode démo)', hook: words.slice(0, 4).join(' ').toUpperCase(),
               score: 92 - out.length * 9 - (i % 4), reason: 'Phrase d\'accroche forte et idée complète (exemple du mode démo).' });
           }

@@ -17,6 +17,13 @@
     API_NON_CONFIGUREE: 'L\'API n\'est pas encore configurée (variables manquantes dans Cloudflare).',
     ERREUR_BASE: 'Erreur de la base de données. Réessaie dans un instant.',
     RESEAU: 'Connexion impossible. Vérifie ta connexion internet puis réessaie.',
+    LIEN_INVALIDE: 'Ce lien n\'est pas valide. Copie l\'adresse complète de la vidéo.',
+    LIEN_NON_PRIS_EN_CHARGE: 'Ce site n\'est pas pris en charge. Colle un lien YouTube, Facebook, Instagram, TikTok, X, Vimeo ou Dailymotion.',
+    IMPORT_NON_CONFIGURE: 'L\'import par lien n\'est pas encore activé sur ce site.',
+    IMPORT_DEMO: 'L\'import par lien ne marche pas en mode démo. Importe un fichier.',
+    ERREUR_IMPORT: 'La vidéo n\'a pas pu être récupérée. Vérifie que le lien est public, puis réessaie.',
+    IMPORTS_EN_COURS: 'Deux imports sont déjà en cours. Attends qu\'ils se terminent.',
+    IMPORT_INVALIDE: 'Cet import est introuvable. Relance-le.',
   };
 
   function errMsg(e) {
@@ -73,6 +80,26 @@
           const o = {}; (rows || []).forEach((r) => { o[r.key] = r.value; }); return o;
         },
         async rpc(name, args) { return check(await sb.rpc(name, args || {})); },
+        async loadBrand() {
+          const id = await this._uid();
+          const { data, error } = await sb.from('profiles').select('brand').eq('id', id).single();
+          return error ? null : (data && data.brand) || null;
+        },
+        async saveBrand(brand) { const id = await this._uid(); return check(await sb.from('profiles').update({ brand }).eq('id', id)); },
+      },
+      async apiRaw(path, init) {
+        const t = await token();
+        if (!t) { const e = new Error('NON_CONNECTE'); e.code = 'NON_CONNECTE'; throw e; }
+        init = init || {};
+        const headers = Object.assign({ Authorization: 'Bearer ' + t }, init.headers || {});
+        let res;
+        try { res = await fetch(C.API_URL.replace(/\/$/, '') + path, { method: 'GET', headers, signal: init.signal }); }
+        catch (err) { if (err.name === 'AbortError') throw err; const e = new Error('RESEAU'); e.code = 'RESEAU'; throw e; }
+        if (!res.ok) {
+          let data = null; try { data = await res.json(); } catch (x) { data = null; }
+          const e = new Error((data && data.error) || 'HTTP_' + res.status); e.code = e.message; e.status = res.status; throw e;
+        }
+        return res;
       },
       async api(path, opts) {
         opts = opts || {};
@@ -102,8 +129,8 @@
     const down = async () => { const e = new Error('RESEAU'); e.code = 'RESEAU'; throw e; };
     return {
       auth: { session: async () => null, onChange() {}, signIn: down, signUp: down, signOut: async () => {}, reset: down, updatePassword: down },
-      db: { profile: down, projects: down, project: down, updateProject: down, deleteProject: down, creditHistory: down, settings: down, rpc: down },
-      api: down,
+      db: { profile: down, projects: down, project: down, updateProject: down, deleteProject: down, creditHistory: down, settings: down, rpc: down, loadBrand: async () => null, saveBrand: down },
+      api: down, apiRaw: down,
     };
   }
   const backend = DEMO ? window.CMMock.backend() : (window.supabase && window.supabase.createClient ? realBackend() : offlineBackend());
@@ -147,6 +174,6 @@
     }
   }
 
-  window.CM = { config: C, DEMO, auth: backend.auth, db: backend.db, api: backend.api, errMsg, loadSettings, fmtTime, el, toast, copyText,
+  window.CM = { config: C, DEMO, auth: backend.auth, db: backend.db, api: backend.api, apiRaw: backend.apiRaw, errMsg, loadSettings, fmtTime, el, toast, copyText,
     brand: C.BRAND || 'ClipMoment' };
 })();

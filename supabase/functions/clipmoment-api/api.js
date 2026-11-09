@@ -14,6 +14,8 @@
  *   ALLOWED_ORIGINS       adresse(s) du site, séparées par des virgules (ex. https://clipmoment.pages.dev)
  *   GROQ_STT_MODEL        facultatif, défaut : whisper-large-v3-turbo
  *   GROQ_LLM_MODEL        facultatif, défaut : openai/gpt-oss-120b
+ *   APIFY_TOKEN           facultatif : active l'import par lien (YouTube, Facebook…) via Apify   (Secret)
+ *   APIFY_ACTOR           facultatif, défaut : agentx~all-video-scraper
  */
 
 const GROQ = 'https://api.groq.com/openai/v1';
@@ -30,7 +32,7 @@ export default {
         return json({ ok: true, stt: sttModel(env), llm: llmModel(env), configured: isConfigured(env) }, 200, cors);
       }
       if (!isConfigured(env)) return json({ error: 'API_NON_CONFIGUREE' }, 500, cors);
-      if (request.method !== 'POST') return json({ error: 'METHODE' }, 405, cors);
+      if (request.method !== 'POST' && !(request.method === 'GET' && path === '/link/file')) return json({ error: 'METHODE' }, 405, cors);
 
       const user = await getUser(request, env);
       if (!user) return json({ error: 'NON_CONNECTE' }, 401, cors);
@@ -40,6 +42,9 @@ export default {
         case '/analyze/cancel': return await cancelAnalysis(request, env, user, cors);
         case '/transcribe': return await transcribe(request, env, user, url, cors);
         case '/moments': return await moments(request, env, user, cors);
+        case '/link/start': return await linkStart(request, env, user, cors);
+        case '/link/status': return await linkStatus(request, env, user, cors);
+        case '/link/file': return await linkFile(request, env, user, url, cors);
         default: return json({ error: 'INTROUVABLE' }, 404, cors);
       }
     } catch (err) {
@@ -66,8 +71,8 @@ function corsHeaders(request, env) {
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-    'Access-Control-Expose-Headers': 'Retry-After',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, Range',
+    'Access-Control-Expose-Headers': 'Retry-After, Content-Length, Content-Range, Accept-Ranges, X-File-Name',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
@@ -114,7 +119,7 @@ async function rpc(env, fn, args) {
   try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
   if (!res.ok) {
     const msg = data && data.message ? data.message : 'ERREUR_BASE';
-    const known = ['CREDITS_INSUFFISANTS', 'VIDEO_TROP_LONGUE', 'DUREE_INVALIDE'];
+    const known = ['CREDITS_INSUFFISANTS', 'VIDEO_TROP_LONGUE', 'DUREE_INVALIDE', 'IMPORTS_EN_COURS'];
     throw fail(known.includes(msg) ? msg : 'ERREUR_BASE', known.includes(msg) ? 402 : 500, msg);
   }
   return data;
@@ -198,7 +203,15 @@ Critères, par ordre d'importance :
 3. Il contient une émotion forte, une opinion tranchée, un conflit, une révélation, une chute drôle, une phrase qu'on a envie de citer, ou un conseil concret.
 4. Il se termine à la fin d'une phrase, idéalement sur une chute.
 
-Pour chaque passage, écris :
+Tu es aussi monteur : un clip peut raccorder plusieurs morceaux pris dans l'extrait.
+- Garde uniquement ce qui sert l'histoire : l'accroche, l'explication essentielle, la chute.
+- Retire les digressions, les répétitions, les phrases inachevées, les passages hors sujet et les échanges sans intérêt.
+- Chaque morceau commence au début d'une phrase et finit à la fin d'une phrase, et dure au moins 2 secondes.
+- Garde l'ordre chronologique, sauf si une phrase très forte mérite d'ouvrir le clip comme accroche : tu peux alors la placer en premier.
+- La durée totale (somme des morceaux) respecte la durée demandée.
+
+Pour chaque clip, écris :
+- "segments" : la liste des morceaux à enchaîner, dans l'ordre de lecture, chacun {"start": secondes, "end": secondes}.
 - "title" : un titre-citation dans la langue de la vidéo, comme le post d'une chaîne de télé sur les réseaux. Reprends une phrase forte réellement prononcée, entre guillemets « », avec 1 ou 2 mots-clés en MAJUSCULES. 90 caractères maximum.
 - "context" : une ligne de contexte courte (70 caractères maximum), par exemple « Le coup de gueule de … ». Ne cite un nom que s'il apparaît dans la transcription.
 - "hook" : une accroche très courte de 3 à 6 mots pour le haut de l'écran.
@@ -206,9 +219,9 @@ Pour chaque passage, écris :
 - "reason" : une phrase en français qui explique pourquoi ce passage peut marcher.
 
 Règles strictes :
-- "start" et "end" sont en secondes et viennent des horodatages fournis.
-- Les passages ne se chevauchent pas.
-- Réponds uniquement avec un objet JSON : {"clips":[{"start":0,"end":0,"title":"","context":"","hook":"","score":0,"reason":""}]}`;
+- Les horodatages viennent de la transcription fournie.
+- Deux clips différents ne réutilisent pas les mêmes morceaux.
+- Réponds uniquement avec un objet JSON : {"clips":[{"segments":[{"start":0,"end":0}],"title":"","context":"","hook":"","score":0,"reason":""}]}`;
 
 async function moments(request, env, user, cors) {
   const b = await readJson(request);
@@ -229,7 +242,7 @@ async function moments(request, env, user, cors) {
   }
   const first = Number(segs[0][0]) || 0, last = Number(segs[segs.length - 1][1]) || 0;
   const userMsg = `Langue de la vidéo : ${b.language || 'inconnue'}.
-Trouve jusqu'à ${count} passages de ${min} à ${max} secondes chacun.
+Propose jusqu'à ${count} clips, chacun d'une durée totale de ${min} à ${max} secondes.
 Transcription (de ${first.toFixed(0)} s à ${last.toFixed(0)} s) :
 ${lines}`;
 
@@ -238,7 +251,7 @@ ${lines}`;
     model,
     messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: userMsg }],
     temperature: 0.4,
-    max_completion_tokens: 3000,
+    max_completion_tokens: 4000,
     response_format: { type: 'json_object' },
   };
   if (model.startsWith('openai/gpt-oss')) body.reasoning_effort = 'low';
@@ -275,29 +288,35 @@ function clampNum(v, lo, hi, d) {
 }
 
 function parseClips(content, first, last, min, max) {
-  let txt = String(content).replace(/```(json)?/g, '');
+  const txt = String(content).replace(/```(json)?/g, '');
   const a = txt.indexOf('{'), z = txt.lastIndexOf('}');
   if (a < 0 || z <= a) return [];
   let obj;
   try { obj = JSON.parse(txt.slice(a, z + 1)); } catch (e) { return []; }
   const arr = Array.isArray(obj) ? obj : Array.isArray(obj.clips) ? obj.clips : [];
+  const r1 = (n) => Math.round(n * 10) / 10;
   const valid = [];
   for (const c of arr) {
-    const s = Number(c.start), e = Number(c.end);
-    if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) continue;
-    if (s < first - 3 || e > last + 3) continue;
-    const d = e - s;
-    if (d < min * 0.6 || d > max * 1.5) continue;
-    valid.push(c);
+    let segs = Array.isArray(c.segments) && c.segments.length ? c.segments : [{ start: c.start, end: c.end }];
+    segs = segs.map((g) => ({ start: Number(g.start), end: Number(g.end) }))
+      .filter((g) => Number.isFinite(g.start) && Number.isFinite(g.end) && g.end - g.start >= 1 && g.start >= first - 3 && g.end <= last + 3);
+    const kept = [];
+    for (const g of segs) if (!kept.some((k) => g.start < k.end && g.end > k.start)) kept.push(g); // pas de morceaux qui se chevauchent
+    if (!kept.length || kept.length > 12) continue;
+    const total = kept.reduce((s2, g) => s2 + (g.end - g.start), 0);
+    if (total < min * 0.6 || total > max * 1.5) continue;
+    valid.push({ c, segs: kept, lo: Math.min(...kept.map((g) => g.start)), hi: Math.max(...kept.map((g) => g.end)), total });
   }
-  valid.sort((x, y) => clampNum(y.score, 0, 100, 50) - clampNum(x.score, 0, 100, 50));
+  valid.sort((x, y) => clampNum(y.c.score, 0, 100, 50) - clampNum(x.c.score, 0, 100, 50));
   const out = [];
-  for (const c of valid) {
-    const s = Number(c.start), e = Number(c.end);
-    if (out.some((o) => s < o.end && e > o.start)) continue; // on garde le meilleur score en cas de chevauchement
+  for (const v of valid) {
+    const overlaps = out.some((o) => o.segments.some((g) => v.segs.some((h) => h.start < g[1] && h.end > g[0])));
+    if (overlaps) continue; // on garde le meilleur score quand deux clips utilisent les mêmes morceaux
+    const c = v.c;
     out.push({
-      start: Math.round(s * 10) / 10,
-      end: Math.round(e * 10) / 10,
+      start: r1(v.lo),
+      end: r1(v.hi),
+      segments: v.segs.map((g) => [r1(g.start), r1(g.end)]),
       title: String(c.title || '').slice(0, 120),
       context: String(c.context || '').slice(0, 90),
       hook: String(c.hook || '').slice(0, 60),
@@ -306,4 +325,93 @@ function parseClips(content, first, last, min, max) {
     });
   }
   return out.sort((x, y) => y.score - x.score);
+}
+
+/* ---------------- Import par lien (YouTube, Facebook…) via Apify ---------------- */
+
+const APIFY = 'https://api.apify.com/v2';
+const LINK_HOSTS = /(^|\.)(youtube\.com|youtu\.be|facebook\.com|fb\.watch|fb\.com|instagram\.com|tiktok\.com|x\.com|twitter\.com|vimeo\.com|dailymotion\.com)$/i;
+const actor = (env) => env.APIFY_ACTOR || 'agentx~all-video-scraper';
+
+function checkLink(raw) {
+  let u;
+  try { u = new URL(String(raw || '').trim()); } catch (e) { throw fail('LIEN_INVALIDE', 400); }
+  if (!/^https?:$/.test(u.protocol) || !LINK_HOSTS.test(u.hostname)) throw fail('LIEN_NON_PRIS_EN_CHARGE', 400);
+  return u.toString();
+}
+
+async function apify(env, path, init) {
+  const sep = path.includes('?') ? '&' : '?';
+  const res = await fetch(APIFY + path + sep + 'token=' + encodeURIComponent(env.APIFY_TOKEN), init);
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+  if (!res.ok) throw fail('ERREUR_IMPORT', 502, typeof data === 'string' ? data : JSON.stringify(data));
+  return data;
+}
+
+async function linkStart(request, env, user, cors) {
+  if (!env.APIFY_TOKEN) throw fail('IMPORT_NON_CONFIGURE', 503);
+  const b = await readJson(request);
+  const link = checkLink(b.url);
+  const quality = ['low', 'medium', 'high'].includes(b.quality) ? b.quality : 'medium';
+  const st = await rpc(env, 'start_link_import', { p_user: user.id, p_url: link });
+  try {
+    const run = await apify(env, '/acts/' + actor(env) + '/runs', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ video_url: link, video_quality: quality }),
+    });
+    await rpc(env, 'set_link_import_run', { p_id: st.import_id, p_run: run.data.id });
+  } catch (e) {
+    const r = await rpc(env, 'finish_link_import', { p_id: st.import_id, p_status: 'echec', p_video_url: null, p_title: null, p_duration: null, p_file_size: null });
+    throw fail('ERREUR_IMPORT', 502, (e && e.detail) || String(e) + (r && r.refunded ? ' (crédits rendus)' : ''));
+  }
+  return json({ import_id: st.import_id, fee: st.fee, credits: st.credits }, 200, cors);
+}
+
+async function linkStatus(request, env, user, cors) {
+  const b = await readJson(request);
+  if (!isUuid(b.import_id)) throw fail('IMPORT_INVALIDE', 400);
+  const li = await rpc(env, 'get_link_import', { p_user: user.id, p_id: b.import_id });
+  if (!li || !li.id) throw fail('IMPORT_INVALIDE', 404);
+  if (li.status !== 'en_cours') return json(publicImport(li), 200, cors);
+  if (!li.run_id) return json({ status: 'en_cours' }, 200, cors);
+  const run = (await apify(env, '/actor-runs/' + encodeURIComponent(li.run_id))).data;
+  if (['FAILED', 'ABORTED', 'TIMED-OUT', 'TIMED_OUT'].includes(run.status)) {
+    const r = await rpc(env, 'finish_link_import', { p_id: li.id, p_status: 'echec', p_video_url: null, p_title: null, p_duration: null, p_file_size: null });
+    return json({ status: 'echec', refunded: r.refunded || 0, credits: r.credits }, 200, cors);
+  }
+  if (run.status !== 'SUCCEEDED') return json({ status: 'en_cours', step: run.status }, 200, cors);
+  const items = await apify(env, '/datasets/' + run.defaultDatasetId + '/items?clean=1&limit=5');
+  const it = (Array.isArray(items) ? items : []).find((x) => x && x.video) || null;
+  if (!it) {
+    const r = await rpc(env, 'finish_link_import', { p_id: li.id, p_status: 'echec', p_video_url: null, p_title: null, p_duration: null, p_file_size: null });
+    return json({ status: 'echec', refunded: r.refunded || 0, credits: r.credits }, 200, cors);
+  }
+  await rpc(env, 'finish_link_import', { p_id: li.id, p_status: 'pret', p_video_url: String(it.video), p_title: String(it.title || 'Vidéo importée'),
+    p_duration: Number(it.duration) || null, p_file_size: Number(it.file_size) || null });
+  return json({ status: 'pret', title: String(it.title || 'Vidéo importée'), duration: Number(it.duration) || null, file_size: Number(it.file_size) || null }, 200, cors);
+}
+
+function publicImport(li) {
+  return { status: li.status, title: li.title, duration: li.duration, file_size: li.file_size, refunded: li.refunded ? li.fee : 0 };
+}
+
+// Relaie le fichier vidéo vers le téléphone du client (par morceaux grâce à l'en-tête Range).
+async function linkFile(request, env, user, url, cors) {
+  const id = url.searchParams.get('import_id');
+  if (!isUuid(id)) throw fail('IMPORT_INVALIDE', 400);
+  const li = await rpc(env, 'get_link_import', { p_user: user.id, p_id: id });
+  if (!li || li.status !== 'pret' || !li.video_url) throw fail('IMPORT_INVALIDE', 404);
+  let src = li.video_url;
+  if (/^https:\/\/api\.apify\.com\//.test(src) && env.APIFY_TOKEN) src += (src.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(env.APIFY_TOKEN);
+  const headers = {};
+  const range = request.headers.get('Range');
+  if (range) headers.Range = range;
+  const res = await fetch(src, { headers, redirect: 'follow' });
+  if (!res.ok && res.status !== 206) throw fail('ERREUR_IMPORT', 502, 'Fichier indisponible (' + res.status + ')');
+  const h = Object.assign({}, cors, { 'Content-Type': res.headers.get('Content-Type') || 'video/mp4', 'Cache-Control': 'no-store' });
+  ['Content-Length', 'Content-Range', 'Accept-Ranges'].forEach((k) => { const v = res.headers.get(k); if (v) h[k] = v; });
+  h['X-File-Name'] = encodeURIComponent(String(li.title || 'video').slice(0, 80));
+  return new Response(res.body, { status: res.status, headers: h });
 }

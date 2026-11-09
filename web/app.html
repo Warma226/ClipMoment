@@ -118,6 +118,15 @@ details.sec summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 480px) { .pill .lab { display: none; } .pill { padding: 7px 10px; } }
 @media (max-width: 360px) { .bar .logo span { display: none; } }
 @media (max-width: 480px) { .bar .wrap { gap: 4px; } .bar .logo { font-size: 18px; } .bar .btn.small { padding: 6px 9px; } .card .act { padding: 0 10px 10px; } .card .body { padding: 10px; } .card .why { display: none; } }
+.parts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.parts li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; padding: 8px 10px; border-radius: 12px; background: var(--sunk); }
+.parts li.off { opacity: .55; }
+.parts label { display: grid; grid-template-columns: 20px 22px minmax(0, 1fr); gap: 8px; align-items: start; cursor: pointer; min-width: 0; }
+.parts .pn { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 600 11.5px var(--mono); }
+.parts .ptx { display: flex; flex-direction: column; min-width: 0; font-size: 13.5px; }
+.parts .ptx b { font: 500 12px var(--mono); color: var(--muted); }
+.parts .ptx span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.parts .btn { min-height: 32px; width: 36px; padding: 0; }
 .logoprev { width: 120px; height: 56px; border-radius: 10px; background: repeating-conic-gradient(var(--sunk) 0 25%, var(--surface) 0 50%) 0 0/14px 14px;
   display: grid; place-items: center; overflow: hidden; border: 1px solid var(--line); }
 .logoprev img { max-width: 100%; max-height: 100%; }
@@ -169,6 +178,17 @@ details.sec summary { cursor: pointer; font-weight: 600; }
   <section class="view" id="v-home" hidden>
     <div class="panel">
       <div class="ph"><h2>Nouvelle vidéo</h2><span class="tag" id="max-tag">30 min max</span></div>
+      <div class="seg" role="radiogroup" aria-label="Source de la vidéo" id="src-tabs">
+        <label><input type="radio" name="src" id="src-file" value="file" checked><span>Fichier</span></label>
+        <label><input type="radio" name="src" id="src-link" value="link"><span>Lien YouTube, Facebook…</span></label>
+      </div>
+      <div id="link-pane" class="stack" hidden>
+        <label class="field"><span class="lbl">Lien de la vidéo</span><input type="url" id="link-url" inputmode="url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…"></label>
+        <p class="note" id="link-note">Coût : <b id="link-fee">3</b> crédits pour récupérer la vidéo, puis 1 crédit par minute analysée. Marche avec YouTube, Facebook, Instagram, TikTok, X, Vimeo et Dailymotion. Importe seulement des vidéos que tu as le droit d'utiliser.</p>
+        <div class="alert err" id="link-err" hidden></div>
+        <div id="link-prog" class="stack" hidden style="gap:8px"><div class="bar-p"><i id="link-bar"></i></div><span class="muted small" id="link-txt"></span></div>
+        <button class="btn primary big" id="link-go" type="button">Récupérer la vidéo</button>
+      </div>
       <label class="drop" id="drop" for="file">
         <input class="vh" type="file" id="file" accept="video/*">
         <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="28" height="26" rx="5"/><path d="M33 20l10-6v20l-10-6"/><path d="M19 18v12M13 24h12"/></svg>
@@ -286,6 +306,14 @@ details.sec summary { cursor: pointer; font-weight: 600; }
               <option value="14">14 premières secondes</option><option value="0">Pendant tout le clip</option></select></label>
         </div>
 
+        <div class="panel" id="p-montage">
+          <div class="ph"><h2>Montage</h2><span class="tag hot mono" id="mt-dur">0 s</span></div>
+          <p class="note" id="mt-sum"></p>
+          <label class="check"><input type="checkbox" id="mt-silence"> Supprimer les silences</label>
+          <label class="check"><input type="checkbox" id="mt-fillers"> Supprimer les hésitations (euh, hum, ben…)</label>
+          <div class="stack" style="gap:6px"><span class="lbl">Passages raccordés, dans l'ordre du clip</span><ol class="parts" id="mt-parts"></ol></div>
+        </div>
+
         <div class="panel">
           <div class="ph"><h2>Sous-titres</h2><label class="check"><input type="checkbox" id="in-caps"> Afficher</label></div>
           <label class="field"><span class="lbl">Hauteur des sous-titres</span><input type="range" id="in-capy" min="35" max="88" value="70"></label>
@@ -302,6 +330,29 @@ details.sec summary { cursor: pointer; font-weight: 600; }
           </div>
           <label class="field" id="f-manual" hidden><span class="lbl">Position (gauche ↔ droite)</span><input type="range" id="in-manual" min="0" max="100" value="50"></label>
           <p class="note" id="frame-note"></p>
+        </div>
+
+        <div class="panel" id="p-logo">
+          <div class="ph"><h2>Logo</h2><span class="muted small">Appliqué à tous tes clips</span></div>
+          <div class="row">
+            <div class="logoprev" id="ed-logo-prev"><span class="muted small">Aucun logo</span></div>
+            <div class="stack" style="gap:6px">
+              <label class="btn small primary" for="ed-logo-file">Ajouter mon logo<input class="vh" type="file" id="ed-logo-file" accept="image/*"></label>
+              <button class="btn ghost small" id="ed-logo-del" type="button">Retirer</button>
+            </div>
+          </div>
+          <div class="stack" id="ed-logo-opts" style="gap:12px">
+            <div class="stack" style="gap:6px"><span class="lbl" id="l-logopos">Position</span>
+              <div class="seg" role="radiogroup" aria-labelledby="l-logopos">
+                <label><input type="radio" name="logopos" id="lp-hg" value="hg"><span>↖ Haut</span></label>
+                <label><input type="radio" name="logopos" id="lp-hd" value="hd"><span>Haut ↗</span></label>
+                <label><input type="radio" name="logopos" id="lp-bg" value="bg"><span>↙ Bas</span></label>
+                <label><input type="radio" name="logopos" id="lp-bd" value="bd"><span>Bas ↘</span></label>
+              </div></div>
+            <label class="field"><span class="lbl">Taille</span><input type="range" id="ed-logo-size" min="8" max="45" value="24"></label>
+            <label class="field"><span class="lbl">Opacité</span><input type="range" id="ed-logo-op" min="30" max="100" value="100"></label>
+          </div>
+          <p class="note">PNG à fond transparent conseillé. Ton logo est enregistré dans ton compte.</p>
         </div>
 
         <div class="panel">

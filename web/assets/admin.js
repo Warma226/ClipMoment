@@ -3,7 +3,7 @@
   'use strict';
   const $ = (s) => document.querySelector(s);
   const { el, toast, errMsg } = CM;
-  const REASONS = { bienvenue: 'Crédits offerts', analyse: 'Analyse', recharge: 'Recharge', remboursement: 'Remboursement', correction: 'Correction' };
+  const REASONS = { bienvenue: 'Crédits offerts', analyse: 'Analyse', import: 'Import par lien', recharge: 'Recharge', remboursement: 'Remboursement', correction: 'Correction' };
   const ADMIN_ERR = { ACCES_REFUSE: 'Accès refusé : ce compte n\'est pas administrateur.', CLIENT_INTROUVABLE: 'Aucun client avec cette adresse e-mail.', MONTANT_NUL: 'Indique un nombre de crédits différent de zéro.' };
   const msg = (e) => { const m = String(e && e.message || e); for (const k in ADMIN_ERR) if (m.includes(k)) return ADMIN_ERR[k]; return errMsg(e); };
   const date = (d) => new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -69,6 +69,7 @@
     settings = await CM.loadSettings();
     $('#set-welcome').value = Number(settings.welcome_credits) || 0;
     $('#set-max').value = Number(settings.max_minutes) || 30;
+    $('#set-linkfee').value = settings.link_fee != null ? Number(settings.link_fee) : 3;
     $('#packs').textContent = '';
     (Array.isArray(settings.packs) ? settings.packs : []).forEach(packRow);
     const pay = settings.payment || {};
@@ -87,6 +88,7 @@
       await CM.db.rpc('admin_set_setting', { p_key: 'welcome_credits', p_value: Math.max(0, Math.round(Number($('#set-welcome').value) || 0)) });
       await CM.db.rpc('admin_set_setting', { p_key: 'max_minutes', p_value: Math.min(120, Math.max(1, Math.round(Number($('#set-max').value) || 30))) });
       await CM.db.rpc('admin_set_setting', { p_key: 'packs', p_value: packs });
+      await CM.db.rpc('admin_set_setting', { p_key: 'link_fee', p_value: Math.min(50, Math.max(0, Math.round(Number($('#set-linkfee').value) || 0))) });
       await CM.db.rpc('admin_set_setting', { p_key: 'payment', p_value: { instructions: $('#set-instr').value.trim(), orange_money: $('#set-om').value.trim(), wave: $('#set-wave').value.trim(), whatsapp: $('#set-wa').value.trim() } });
       toast('Réglages enregistrés.');
       loadSettings();

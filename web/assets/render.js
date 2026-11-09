@@ -18,7 +18,8 @@
 
   function defaultStyle(template) {
     return { template: template || 'citation', titleSec: template === 'citation' || !template ? 14 : 3,
-      captions: !!(TEMPLATES[template || 'citation'] || {}).captions, capY: 0.7, frame: 'auto', manualX: 0.5, track: null, edits: {} };
+      captions: !!(TEMPLATES[template || 'citation'] || {}).captions, capY: 0.7, frame: 'auto', manualX: 0.5, track: null, trackV: 2, edits: {},
+      cutSilence: true, cutFillers: true };
   }
 
   /* ---------- Sous-titres : regroupement des mots ---------- */
@@ -52,7 +53,7 @@
     for (let i = 1; i < track.length; i++) {
       if (t < track[i][0]) {
         const a = track[i - 1], b = track[i];
-        if (Math.abs(b[1] - a[1]) > 0.2) return a[1]; // changement de plan : pas de glissement
+        if (Math.abs(b[1] - a[1]) > 0.2 || b[0] - a[0] > 1.5) return a[1]; // changement de plan ou raccord : pas de glissement
         return a[1] + (b[1] - a[1]) * ((t - a[0]) / (b[0] - a[0]));
       }
     }
@@ -227,14 +228,21 @@
   function drawBrand(ctx, brand, prog) {
     const img = logoImg(brand.logo);
     if (img) {
-      const s = Math.min(170 / img.naturalWidth, 80 / img.naturalHeight);
-      const w = img.naturalWidth * s, h = img.naturalHeight * s;
-      ctx.drawImage(img, W - 46 - w, 58, w, h);
+      const size = clamp(Number(brand.logoSize) || 0.24, 0.08, 0.45);
+      const s = Math.min(W * size / img.naturalWidth, H * 0.11 / img.naturalHeight);
+      const w = img.naturalWidth * s, h = img.naturalHeight * s, pos = brand.logoPos || 'hd', m = 44;
+      const x = pos[1] === 'g' ? m : W - m - w;
+      const y = pos[0] === 'b' ? H - 34 - h - (brand.progress ? 12 : 0) : 58;
+      ctx.save(); ctx.globalAlpha = clamp(Number(brand.logoOpacity) || 1, 0.3, 1); ctx.drawImage(img, x, y, w, h); ctx.restore();
     }
     if (brand.handle && brand.handle.trim()) {
-      ctx.save(); ctx.font = '600 28px ' + FONTS.body; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      // Si le logo est en bas, la signature se place du côté opposé pour ne pas le chevaucher.
+      const lp = img && (brand.logoPos || 'hd')[0] === 'b' ? (brand.logoPos || 'hd')[1] : null;
+      ctx.save(); ctx.font = '600 28px ' + FONTS.body; ctx.textBaseline = 'middle';
+      ctx.textAlign = lp === 'g' ? 'right' : lp === 'd' ? 'left' : 'center';
+      const hx = lp === 'g' ? W - 44 : lp === 'd' ? 44 : W / 2;
       ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 8; ctx.fillStyle = 'rgba(255,255,255,.88)';
-      ctx.fillText(brand.handle.trim(), W / 2, H * 0.945); ctx.restore();
+      ctx.fillText(brand.handle.trim(), hx, H * 0.945); ctx.restore();
     }
     if (brand.progress) {
       ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(0, H - 10, W, 10);
@@ -242,11 +250,15 @@
     }
   }
 
-  /** Dessine une image complète du clip au temps absolu tAbs (en secondes dans la vidéo source). */
-  function draw(ctx, src, sw, sh, clip, groups, tAbs, brand) {
-    const st = clip.style, len = Math.max(0.1, clip.end - clip.start), rel = clamp(tAbs - clip.start, 0, len);
+  /** Dessine une image complète du clip.
+   *  tAbs : temps dans la vidéo source (pour l'image, le cadrage et les sous-titres).
+   *  relOut / lenOut : position et durée dans le clip monté (pour le titre et la barre de progression). */
+  function draw(ctx, src, sw, sh, clip, groups, tAbs, brand, relOut, lenOut) {
+    const st = clip.style;
+    const len = Math.max(0.1, lenOut != null ? lenOut : clip.end - clip.start);
+    const rel = clamp(relOut != null ? relOut : tAbs - clip.start, 0, len);
     ctx.save();
-    drawVideo(ctx, src, sw, sh, st, rel);
+    drawVideo(ctx, src, sw, sh, st, tAbs);
     if (st.captions && groups) drawCaptions(ctx, groups, st, tAbs, brand || {});
     if (st.template === 'citation') drawQuote(ctx, clip, st, rel, len); else drawHook(ctx, clip, st, rel, len);
     drawBrand(ctx, brand || {}, rel / len);
@@ -290,8 +302,9 @@
     });
   }
 
-  /** Analyse le cadrage d'un clip : position horizontale du visage principal toutes les 0,5 s. */
-  async function analyzeFraming(url, clip, onProgress, signal) {
+  /** Analyse le cadrage d'un clip : position horizontale du visage principal toutes les 0,5 s,
+   *  sur chaque morceau gardé au montage. Les temps du suivi sont ceux de la vidéo source. */
+  async function analyzeFraming(url, clip, onProgress, signal, pieces) {
     const det = await detector();
     if (!det) return { track: null, detector: null };
     const v = document.createElement('video');
@@ -304,17 +317,21 @@
       if (!sw || sh / sw >= 1.5) return { track: null, detector: det.kind };
       const c = document.createElement('canvas'); c.width = 384; c.height = Math.round(384 * sh / sw);
       const cx = c.getContext('2d', { willReadFrequently: true });
-      const raw = [], step = 0.5, len = clip.end - clip.start;
-      for (let t = 0; t <= len + 0.01; t += step) {
+      const raw = [], step = 0.5;
+      const P = (pieces && pieces.length ? pieces : [[clip.start, clip.end]]).slice().sort((a, b) => a[0] - b[0]);
+      const times = [];
+      for (const [a, b] of P) { for (let t = a; t <= b + 0.01; t += step) times.push(+t.toFixed(2)); }
+      for (let i = 0; i < times.length; i++) {
+        const t = times[i];
         if (signal && signal.aborted) throw new DOMException('Annulé', 'AbortError');
-        await seek(v, clip.start + t);
+        await seek(v, t);
         cx.drawImage(v, 0, 0, c.width, c.height);
         let boxes = [];
         try { boxes = await det.detect(c); } catch (e) { boxes = []; }
         let best = null;
         for (const b of boxes) if (!best || b.width * b.height > best.width * best.height) best = b;
-        raw.push([+t.toFixed(2), best ? (best.x + best.width / 2) / c.width : null]);
-        if (onProgress) onProgress(Math.min(1, t / len));
+        raw.push([t, best ? (best.x + best.width / 2) / c.width : null]);
+        if (onProgress) onProgress(Math.min(1, (i + 1) / times.length));
       }
       if (!raw.some((p) => p[1] != null)) return { track: null, detector: det.kind };
       for (let i = 0; i < raw.length; i++) if (raw[i][1] == null) {
