@@ -60,9 +60,12 @@
 
   let settings = {};
   function packRow(p) {
-    const c = el('input', { type: 'number', min: '1', step: '1', value: p ? p.credits : '', 'aria-label': 'Crédits du pack' });
+    const c = el('input', { type: 'number', min: '1', step: '1', value: p ? p.credits : '', placeholder: 'Crédits', 'aria-label': 'Crédits du pack' });
     const pr = el('input', { type: 'text', value: p ? p.price : '', placeholder: '1 000 F', 'aria-label': 'Prix affiché' });
-    const row = el('div', { class: 'packrow' }, [c, pr, el('button', { class: 'btn small ghost', type: 'button', text: 'Retirer', onclick: () => row.remove() })]);
+    const nm = el('input', { type: 'text', value: p && p.name || '', maxlength: '30', placeholder: 'Nom (ex. Créateur)', 'aria-label': 'Nom du pack' });
+    const old = el('input', { type: 'text', value: p && p.old_price || '', maxlength: '20', placeholder: 'Ancien prix (promo)', 'aria-label': 'Ancien prix, seulement pour une vraie promotion' });
+    const tl = el('input', { type: 'text', class: 'wide', value: p && p.tagline || '', maxlength: '60', placeholder: 'Phrase courte (ex. Pour publier chaque semaine)', 'aria-label': 'Phrase du pack' });
+    const row = el('div', { class: 'packrow' }, [c, pr, nm, old, tl, el('button', { class: 'btn small ghost', type: 'button', text: 'Retirer', onclick: () => row.remove() })]);
     $('#packs').appendChild(row);
   }
   async function loadSettings() {
@@ -82,7 +85,12 @@
   $('#set-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const packs = Array.from(document.querySelectorAll('#packs .packrow')).map((r) => {
-      const [c, p] = r.querySelectorAll('input'); return { credits: Math.round(Number(c.value)), price: p.value.trim() };
+      const [c, p, n, o, t] = r.querySelectorAll('input');
+      const pk = { credits: Math.round(Number(c.value)), price: p.value.trim() };
+      if (n.value.trim()) pk.name = n.value.trim();
+      if (t.value.trim()) pk.tagline = t.value.trim();
+      if (o.value.trim()) pk.old_price = o.value.trim();
+      return pk;
     }).filter((p) => p.credits > 0 && p.price);
     try {
       await CM.db.rpc('admin_set_setting', { p_key: 'welcome_credits', p_value: Math.max(0, Math.round(Number($('#set-welcome').value) || 0)) });

@@ -190,7 +190,7 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
   <div class="wrap">
     <nav class="nav" aria-label="Navigation principale">
       <a class="logo" href="index.html"><i aria-hidden="true"></i><span data-brand>ClipMoment</span></a>
-      <div class="links"><a href="#pourquoi">Fonctions</a><a href="#comment">Comment ça marche</a><a href="#tarifs">Tarifs</a><a href="#faq">Questions</a></div>
+      <div class="links"><a href="#pourquoi">Fonctions</a><a href="#comment">Comment ça marche</a><a href="tarifs.html">Tarifs</a><a href="#faq">Questions</a></div>
       <div class="right"><a class="login" href="app.html">Connexion</a><a class="btn white small" href="app.html">Commencer</a></div>
     </nav>
 
@@ -306,7 +306,7 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
     <div class="sh"><span class="eyebrow">Tarifs</span><h2>Paie seulement ce que tu analyses</h2>
       <p id="price-sub">1 crédit = 1 minute de vidéo analysée. Le montage et les exports sont illimités. Tes premières minutes sont offertes.</p></div>
     <div class="price-grid" id="price"></div>
-    <p class="note" style="margin-top:16px">Paiement par Orange Money ou Wave. Tes crédits sont ajoutés à ton compte après réception.</p>
+    <p class="note" style="margin-top:16px">Paiement par Orange Money ou Wave. Tes crédits sont ajoutés à ton compte après réception. <a href="tarifs.html">Voir le détail des packs</a></p>
   </section>
 
   <section class="s center" id="faq">
@@ -315,7 +315,7 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
       <details><summary>Quelles vidéos marchent le mieux ?</summary><p>Celles où quelqu'un parle : interviews, podcasts, débats, lives, cours, prédications, conférences. L'IA choisit les passages d'après ce qui est dit.</p></details>
       <details><summary>Ma vidéo est-elle envoyée sur internet ?</summary><p>Seul l'audio est envoyé, pour la transcription. La vidéo reste sur ton appareil : le découpage, les sous-titres et l'export se font dans ton navigateur.</p></details>
       <details><summary>Combien de temps ça prend ?</summary><p>L'analyse d'une vidéo de 30 minutes prend en général 2 à 5 minutes. L'export d'un clip prend à peu près sa durée : 40 secondes pour un clip de 40 secondes.</p></details>
-      <details><summary>Je peux coller un lien YouTube ?</summary><p>Pas encore. Télécharge d'abord la vidéo sur ton téléphone, puis importe le fichier.</p></details>
+      <details><summary>Je peux coller un lien YouTube ?</summary><p>Oui : colle un lien YouTube, Facebook, Instagram, TikTok ou X dans le studio. L'import coûte quelques crédits en plus, rendus si l'import échoue. N'importe que des vidéos que tu as le droit de réutiliser.</p></details>
       <details><summary>Mes crédits expirent-ils ?</summary><p>Non. Tes crédits restent sur ton compte tant que tu ne les utilises pas.</p></details>
     </div>
   </section>
@@ -357,7 +357,7 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
       CM.el('b', { text: p.credits + ' min' }),
       CM.el('span', { class: 'sub', text: 'de vidéo à analyser' }),
       CM.el('span', { class: 'amt', text: p.price }),
-      CM.el('a', { class: 'btn' + (i === top ? '' : ' primary'), href: 'app.html', text: 'Choisir ce pack' }),
+      CM.el('a', { class: 'btn' + (i === top ? '' : ' primary'), href: 'tarifs.html#pack-' + i, text: 'Choisir ce pack' }),
     ]));
   });
   const tp = packs[top];

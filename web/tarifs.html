@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tarifs — ClipMoment</title>
+<meta name="description" content="Des packs de minutes simples, payables par Orange Money ou Wave. Toutes les fonctions dans chaque pack.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+/* Mise en page : en-tête centré, trois cartes (celle du milieu mise en avant), notes de paiement dessous. */
+main { padding-block: 40px 70px; overflow-x: clip; }
+.bar .btn { white-space: nowrap; }
+@media (max-width: 420px) { #nav-home { display: none; } }
+@media (max-width: 340px) { .bar .logo span { display: none; } }
+.head { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px; position: relative; isolation: isolate; }
+.head::before { content: ""; position: absolute; z-index: -1; width: min(760px, 120%); aspect-ratio: 1; top: -40%; left: 50%; transform: translateX(-50%); border-radius: 50%;
+  border: 1px solid var(--line); opacity: .7; }
+.head h1 { font-size: clamp(34px, 7vw, 64px); line-height: 1.04; font-weight: 700; letter-spacing: -.035em; }
+.head h1 span { display: block; background: linear-gradient(90deg, var(--sky-1), var(--accent) 40%, #4FB3FF); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.perks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; font-size: 15px; font-weight: 500; }
+.perks span { display: inline-flex; align-items: center; gap: 8px; }
+.perks svg { width: 19px; height: 19px; color: var(--muted); flex: none; }
+.perks i { width: 4px; height: 4px; border-radius: 50%; background: var(--line); display: none; }
+@media (min-width: 720px) { .perks i { display: inline-block; } }
+
+.plans { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 44px; align-items: stretch; }
+@media (min-width: 900px) { .plans { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } .plan.top { transform: translateY(-8px); } }
+.plan { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 26px 24px; display: flex; flex-direction: column; gap: 6px;
+  box-shadow: 0 2px 10px rgba(14, 26, 43, .05); }
+.plan .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--sunk); color: var(--ink); margin-bottom: 14px; }
+.plan .ic svg { width: 22px; height: 22px; }
+.plan h2 { font-size: 21px; font-weight: 700; }
+.plan .tag2 { color: var(--muted); font-size: 15px; }
+.plan .price { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 18px 0 4px; }
+.plan .price b { font: 700 40px/1 var(--display); letter-spacing: -.03em; }
+.plan .price s { font: 600 30px/1 var(--display); color: var(--line); letter-spacing: -.02em; }
+.plan .per { font-size: 13.5px; color: var(--muted); font-family: var(--mono); }
+.plan .btn { margin: 18px 0 6px; min-height: 48px; border-radius: 12px; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); }
+.plan .btn:hover { background: var(--ink); color: var(--bg); }
+.plan .mins { display: flex; align-items: center; gap: 10px; padding: 12px 0 16px; border-bottom: 1px dashed var(--line); font-weight: 500; }
+.plan .mins svg { width: 20px; height: 20px; color: var(--muted); }
+.plan ul { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.plan li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
+.plan li svg { width: 19px; height: 19px; flex: none; color: var(--muted); margin-top: 1px; }
+.plan li span { text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--line); text-underline-offset: 4px; }
+
+/* Carte mise en avant : nuit bleue, lueur, grille légère */
+.plan.top { color: #fff; border-color: rgba(75, 151, 255, .45); background:
+  radial-gradient(120% 70% at 85% 0%, rgba(27, 116, 232, .55), transparent 60%),
+  linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px) 0 0 / 34px 34px,
+  linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px) 0 0 / 34px 34px, #0C1524;
+  box-shadow: 0 30px 60px -28px rgba(10, 30, 70, .7); }
+.plan.top .ic { background: var(--accent); color: #fff; }
+.plan.top .tag2, .plan.top .per { color: rgba(255, 255, 255, .7); }
+.plan.top .price s { color: rgba(255, 255, 255, .3); }
+.plan.top .btn { background: var(--accent); border-color: var(--accent); color: #fff; }
+.plan.top .btn:hover { filter: brightness(1.08); }
+.plan.top .mins { border-color: rgba(255, 255, 255, .18); }
+.plan.top .mins svg, .plan.top li svg { color: #7DB8FF; }
+.plan.top li span { text-decoration-color: rgba(255, 255, 255, .3); }
+.badge { position: absolute; top: -1px; right: 22px; background: #FFC233; color: #3A2600; font: 700 11.5px/1 var(--body); letter-spacing: .08em;
+  text-transform: uppercase; padding: 7px 10px; border-radius: 0 0 8px 8px; }
+
+.foot { margin-top: 44px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.foot .lock svg { width: 15px; height: 15px; vertical-align: -2px; margin-right: 5px; }
+.foot hr { width: 140px; border: 0; border-top: 1px dashed var(--line); margin: 10px 0; }
+.foot a { color: var(--ink); }
+
+/* Fenêtre de paiement */
+.pay-amt { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; align-items: baseline; padding: 14px 16px; border-radius: 14px; background: var(--sunk); }
+.pay-amt b { white-space: nowrap; font: 700 26px var(--display); letter-spacing: -.02em; }
+.copyrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); }
+.copyrow span { font-family: var(--mono); font-size: 14.5px; overflow-wrap: anywhere; }
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14.5px; }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="wrap">
+    <a class="logo" href="index.html"><i aria-hidden="true"></i><span data-brand>ClipMoment</span></a>
+    <span class="spacer"></span>
+    <a class="btn ghost small" href="index.html" id="nav-home">Accueil</a>
+    <a class="btn small" href="app.html" id="nav-app">Se connecter</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="head">
+    <h1>Petit prix, <span>des dizaines de clips</span></h1>
+    <div class="perks">
+      <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="5" width="15" height="11" rx="2"/><path d="M2.5 8.5h15M6 13h3"/></svg>Paiement Orange Money ou Wave</span><i></i>
+      <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 5.5l1.5 1.5L7 4.5M3 11l1.5 1.5L7 10M10 6h7M10 11.5h7M10 16h7"/></svg>Toutes les fonctions dans chaque pack</span><i></i>
+      <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 5.5V10l3 2"/></svg>Minutes sans date d'expiration</span>
+    </div>
+  </div>
+
+  <div class="plans" id="plans"></div>
+
+  <div class="foot">
+    <span class="lock"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="9" width="12" height="8.5" rx="2"/><path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/></svg>Paiement par Orange Money ou Wave, crédits ajoutés à ton compte après réception.</span>
+    <span id="welcome-note"></span>
+    <hr>
+    <span>1 crédit = 1 minute de vidéo analysée. Si une analyse échoue avant la transcription, tes crédits sont rendus automatiquement.</span>
+    <span id="contact-line"></span>
+  </div>
+</main>
+
+<dialog id="dlg-pay" aria-labelledby="pay-title">
+  <div class="dh"><h2 id="pay-title">Payer le pack</h2><button class="btn ghost small" type="button" data-close>Fermer</button></div>
+  <div class="db">
+    <div class="pay-amt"><span id="pay-pack">Pack</span><b id="pay-price">0 F</b></div>
+    <ol class="steps">
+      <li>Envoie <b id="pay-price2">0 F</b> sur l'un de ces numéros.</li>
+      <li>Envoie la capture du paiement sur WhatsApp, avec ton adresse e-mail.</li>
+      <li>Tes <b id="pay-mins">0</b> minutes sont ajoutées à ton compte, en général sous 24 h.</li>
+    </ol>
+    <div class="stack" id="pay-rows" style="gap:8px"></div>
+    <div class="alert" id="pay-account"></div>
+    <a class="btn primary big block" id="pay-wa" target="_blank" rel="noopener" hidden>Envoyer la capture sur WhatsApp</a>
+    <p class="note" id="pay-instr"></p>
+  </div>
+</dialog>
+
+<script src="assets/config.js"></script>
+<script src="assets/mock.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+<script src="assets/core.js"></script>
+<script>
+(async function () {
+  'use strict';
+  const { el, copyText } = CM;
+  const $ = (s) => document.querySelector(s);
+  document.querySelectorAll('[data-brand]').forEach((n) => { n.textContent = CM.brand; });
+
+  const ICONS = [
+    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4.2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 12a7 7 0 0 1-5.4-2.6c.6-1.5 2.8-2.6 5.4-2.6s4.8 1.1 5.4 2.6A7 7 0 0 1 12 19.2z"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2.5 5 13.2h5.6l-1.1 8.3 8.5-10.7h-5.6z"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h10v4a5 5 0 0 1-10 0zM7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5A3.5 3.5 0 0 1 16.5 11M12 13v4M8.5 20h7M10 17h4"/></svg>',
+  ];
+  const CHECK = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7.5"/><path d="M6.8 10.2l2.2 2.2 4.2-4.6"/></svg>';
+  const SCREEN = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="3.5" width="15" height="10" rx="1.5"/><path d="M7 17h6M10 13.5V17"/></svg>';
+  const NAMES = [['Découverte', 'Pour essayer sur quelques vidéos'], ['Créateur', 'Pour publier chaque semaine'], ['Pro', 'Pour les médias et les agences']];
+  const num = (p) => { const d = String(p || '').replace(/[^\d]/g, ''); return d ? Number(d) : 0; };
+  const money = (n) => n.toLocaleString('fr-FR').replace(/ | /g, ' ') + ' F';
+
+  const [s, session] = await Promise.all([CM.loadSettings(), CM.auth.session().catch(() => null)]);
+  if (session) $('#nav-app').textContent = 'Mon studio';
+  const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 60, price: '1 000 F' }, { credits: 300, price: '4 000 F' }, { credits: 900, price: '10 000 F' }];
+  const top = packs.length >= 3 ? 1 : packs.length - 1;
+  const fee = s.link_fee != null ? Number(s.link_fee) : 3;
+  const pay = s.payment || {};
+  const w = Number(s.welcome_credits) || 0;
+  if (w) $('#welcome-note').textContent = w + ' minutes offertes à l\'inscription pour essayer avant de payer.';
+  if (pay.whatsapp) $('#contact-line').textContent = 'Une question ? Écris-nous sur WhatsApp au ' + pay.whatsapp + '.';
+
+  const box = $('#plans');
+  packs.forEach((p, i) => {
+    const nm = p.name || (NAMES[i] || NAMES[NAMES.length - 1])[0];
+    const tl = p.tagline || (NAMES[i] || NAMES[NAMES.length - 1])[1];
+    const per = num(p.price) && p.credits ? Math.round(num(p.price) / p.credits) : 0;
+    const clips = Math.max(1, Math.round(p.credits / 2.5));
+    const card = el('article', { class: 'plan' + (i === top ? ' top' : ''), id: 'pack-' + i });
+    if (i === top) card.appendChild(el('span', { class: 'badge', text: 'Le plus choisi' }));
+    const ic = el('span', { class: 'ic', 'aria-hidden': 'true' }); ic.innerHTML = ICONS[Math.min(i, 2)];
+    card.appendChild(ic);
+    card.appendChild(el('h2', { text: nm }));
+    card.appendChild(el('span', { class: 'tag2', text: tl }));
+    const pr = el('div', { class: 'price' }, [el('b', { text: p.price })]);
+    if (p.old_price) pr.appendChild(el('s', { text: p.old_price, 'aria-label': 'au lieu de ' + p.old_price }));
+    card.appendChild(pr);
+    card.appendChild(el('span', { class: 'per', text: per ? '≈ ' + per + ' F la minute' : '' }));
+    card.appendChild(el('button', { class: 'btn', type: 'button', text: 'Choisir le pack ' + nm, onclick: () => openPay(p, nm) }));
+    const mins = el('div', { class: 'mins' }); mins.innerHTML = SCREEN; mins.appendChild(document.createTextNode(p.credits + ' minutes de vidéo à analyser'));
+    card.appendChild(mins);
+    const ul = el('ul');
+    ['Environ ' + clips + ' clips proposés par l\'IA', 'Montage, sous-titres animés et logo', 'Import par lien YouTube et Facebook (' + fee + ' crédits)', 'Exports illimités, sans filigrane'].forEach((t) => {
+      const li = el('li'); li.innerHTML = CHECK; li.appendChild(el('span', { text: t })); ul.appendChild(li);
+    });
+    card.appendChild(ul);
+    box.appendChild(card);
+  });
+
+  function openPay(p, nm) {
+    $('#pay-title').textContent = 'Payer le pack ' + nm;
+    $('#pay-pack').textContent = nm + ' · ' + p.credits + ' min';
+    $('#pay-price').textContent = p.price; $('#pay-price2').textContent = p.price; $('#pay-mins').textContent = String(p.credits);
+    const rows = $('#pay-rows'); rows.textContent = '';
+    [['Orange Money', pay.orange_money], ['Wave', pay.wave]].forEach(([k, v]) => {
+      if (!v) return;
+      const b = el('button', { class: 'btn small', type: 'button', text: 'Copier' });
+      b.addEventListener('click', () => copyText(v, b));
+      rows.appendChild(el('div', { class: 'copyrow' }, [el('div', {}, [el('span', { class: 'lbl', text: k }), el('br'), el('span', { text: v })]), b]));
+    });
+    const acc = $('#pay-account'); acc.textContent = '';
+    if (session) acc.append('Compte à créditer : ', el('b', { text: session.user.email }));
+    else acc.append('Crée d\'abord ton compte gratuit pour qu\'on sache où ajouter tes minutes. ', el('a', { href: 'app.html', text: 'Créer mon compte' }));
+    const wa = $('#pay-wa'), digits = String(pay.whatsapp || '').replace(/[^\d]/g, '');
+    if (digits) {
+      const msg = 'Bonjour, je viens de payer le pack ' + nm + ' (' + p.price + ', ' + p.credits + ' min) sur ClipMoment.' + (session ? ' Mon compte : ' + session.user.email + '.' : '') + ' Voici la capture du paiement.';
+      wa.href = 'https://wa.me/' + digits + '?text=' + encodeURIComponent(msg); wa.hidden = false;
+    } else wa.hidden = true;
+    $('#pay-instr').textContent = pay.instructions || '';
+    $('#dlg-pay').showModal();
+  }
+  document.querySelectorAll('dialog [data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
+  $('#dlg-pay').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+  const m = /^#pack-(\d+)$/.exec(location.hash);
+  if (m && packs[+m[1]]) { const i = +m[1]; openPay(packs[i], packs[i].name || (NAMES[i] || NAMES[2])[0]); }
+})();
+</script>
+</body>
+</html>
