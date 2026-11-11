@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fonctionnalités — ClipMoment</title>
+<meta name="description" content="Montage par IA, suppression des silences et des « euh », sous-titres animés, cadrage sur le visage, gabarits, logo et import par lien : tout ce que fait ClipMoment.">
+<meta name="theme-color" content="#1A6FE0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Montserrat:wght@900&family=Roboto+Condensed:wght@400;700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Une fonction par rangée : texte d'un côté, démonstration animée de l'autre (côtés alternés sur grand écran). */
+.toc { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: -60px; position: relative; z-index: 2; }
+.toc a { text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-weight: 600; font-size: 14px;
+  box-shadow: 0 8px 20px -14px rgba(8, 30, 70, .4); }
+.toc a:hover { border-color: var(--accent); color: var(--accent); }
+.frow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: center; padding-block: 56px; scroll-margin-top: 80px; }
+@media (min-width: 900px) { .frow { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 56px; } .frow:nth-of-type(even) .txt { order: 2; } }
+.txt { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.txt .num { font: 600 13px var(--mono); color: var(--accent); }
+.txt h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 700; letter-spacing: -.025em; line-height: 1.1; }
+.txt p { margin: 0; color: var(--muted); font-size: 16px; max-width: 48ch; }
+.txt ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.txt li { display: flex; gap: 10px; align-items: flex-start; }
+.txt li::before { content: ""; flex: none; width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; background: var(--accent-soft) no-repeat center / 12px
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.2 2.2 4.8-5' fill='none' stroke='%231B74E8' stroke-width='1.8'/%3E%3C/svg%3E"); }
+.vis { position: relative; border-radius: 28px; padding: clamp(18px, 3.5vw, 34px); background: linear-gradient(160deg, var(--folder), var(--folder-2)); min-height: 280px;
+  display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.vis .montage { box-shadow: none; }
+.vis .mt-steps { display: none !important; }
+
+/* Transcription nettoyée */
+.clean { background: var(--surface); border-radius: 18px; padding: 18px; width: 100%; max-width: 460px; font-size: 16px; line-height: 2.1; box-shadow: 0 16px 40px -26px rgba(8, 30, 70, .5); }
+.clean .lb { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; display: block; line-height: 1.4; margin-bottom: 8px; }
+.clean s { text-decoration: none; position: relative; padding: 2px 6px; border-radius: 7px; background: #FDE7E3; color: #C0362C; font-weight: 600; white-space: nowrap; }
+.clean s::after { content: ""; position: absolute; left: 4px; right: 4px; top: 50%; height: 2px; background: currentColor; transform: scaleX(0); transform-origin: left; animation: strike 4s infinite; animation-delay: var(--d, 0s); }
+@keyframes strike { 0%, 15% { transform: scaleX(0); } 30%, 85% { transform: scaleX(1); } 100% { transform: scaleX(0); } }
+.clean .sil { font-family: var(--mono); font-size: 12px; }
+@media (prefers-color-scheme: dark) { .clean s { background: rgba(255, 138, 128, .14); color: #FF8A80; } }
+
+/* Cadrage */
+.frame { position: relative; width: 100%; max-width: 480px; aspect-ratio: 16/9; border-radius: 16px; overflow: hidden; background: radial-gradient(90% 90% at 30% 40%, #56423F, #1B1820 70%); }
+.frame .ppl { position: absolute; bottom: -6%; width: 30%; aspect-ratio: 1/1.3; animation: walk 7s ease-in-out infinite; }
+.frame .ppl i { position: absolute; left: 50%; transform: translateX(-50%); }
+.frame .ppl .b { bottom: 0; width: 100%; height: 50%; border-radius: 46% 46% 0 0; background: #151820; }
+.frame .ppl .t { bottom: 0; width: 38%; height: 46%; border-radius: 40% 40% 0 0; background: #A9B2A4; }
+.frame .ppl .h { top: 8%; width: 44%; aspect-ratio: 1/1.18; border-radius: 48%; background: #C88F72; }
+.frame .ppl .c { top: 5%; width: 47%; aspect-ratio: 1/.46; background: #2A2220; border-radius: 50% 50% 28% 28%; }
+.frame .crop { position: absolute; top: 0; bottom: 0; width: 31.6%; border: 3px solid #FFE600; border-radius: 6px; box-shadow: 0 0 0 999px rgba(0, 0, 0, .55); animation: follow 7s ease-in-out infinite; }
+.frame .crop::after { content: "9:16"; position: absolute; top: 6px; left: 6px; font: 700 10px var(--mono); background: #FFE600; color: #111; padding: 2px 5px; border-radius: 4px; }
+.frame .face { position: absolute; top: 18%; width: 14%; aspect-ratio: 1; border: 2px dashed #7CF0B5; border-radius: 8px; animation: face 7s ease-in-out infinite; }
+@keyframes walk { 0%, 100% { left: 12%; } 45%, 55% { left: 58%; } }
+@keyframes follow { 0%, 100% { left: 11%; } 45%, 55% { left: 57%; } }
+@keyframes face { 0%, 100% { left: 20%; } 45%, 55% { left: 66%; } }
+
+/* Logo */
+.brandset { display: flex; gap: clamp(14px, 4vw, 30px); align-items: center; flex-wrap: wrap; justify-content: center; }
+.brandset .pm { max-width: 190px; }
+.brandset .opts { display: flex; flex-direction: column; gap: 10px; background: var(--surface); border-radius: 18px; padding: 16px; box-shadow: 0 16px 40px -26px rgba(8, 30, 70, .5); }
+.brandset .opts .lb { font-size: 12px; font-weight: 600; color: var(--muted); }
+.brandset .sw { display: flex; gap: 7px; }
+.brandset .sw i { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.brandset .pos { display: grid; grid-template-columns: repeat(2, 30px); gap: 5px; }
+.brandset .pos i { height: 22px; border-radius: 5px; background: var(--sunk); }
+.brandset .pos i.on { background: var(--accent); }
+
+/* Lien */
+.linkui { background: var(--surface); border-radius: 18px; padding: 18px; width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 16px 40px -26px rgba(8, 30, 70, .5); }
+.linkui .inp { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 12px; border: 1.5px solid var(--accent); font-size: 14px; overflow: hidden; white-space: nowrap; }
+.linkui .inp span { overflow: hidden; text-overflow: ellipsis; }
+.linkui .inp b { width: 2px; height: 18px; background: var(--accent); animation: blink2 1s steps(1) infinite; flex: none; }
+@keyframes blink2 { 50% { opacity: 0; } }
+.linkui .plats { display: flex; gap: 6px; flex-wrap: wrap; }
+.linkui .plats span { font-size: 12.5px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: var(--sunk); }
+.linkui .bar-p i { animation: fill 3.5s ease-in-out infinite; }
+@keyframes fill { 0% { width: 5%; } 80%, 100% { width: 100%; } }
+
+/* Notes */
+.scores { background: var(--surface); border-radius: 18px; padding: 16px; width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 16px 40px -26px rgba(8, 30, 70, .5); }
+.scores .it { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--sunk); }
+.scores .it b { font-size: 14px; }
+.scores .it em { font: 700 15px var(--display); font-style: normal; color: var(--accent); }
+.scores .it .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: rgba(27, 116, 232, .14); overflow: hidden; }
+.scores .it .bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width 1.2s cubic-bezier(.2, .7, .2, 1); }
+.scores.in .it .bar i { width: var(--v); }
+.scores .why { font-size: 12.5px; color: var(--muted); grid-column: 1 / -1; }
+
+/* Petits plus */
+.extras { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; margin-top: 36px; width: 100%; text-align: left; }
+.extra { padding: 20px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); display: flex; gap: 14px; align-items: flex-start; }
+.extra .ic { flex: none; width: 40px; height: 40px; border-radius: 12px; background: var(--accent-soft); display: grid; place-items: center; font-size: 19px; }
+.extra h3 { font-size: 16px; font-weight: 700; }
+.extra p { margin: 4px 0 0; color: var(--muted); font-size: 14.5px; }
+</style>
+</head>
+<body class="site" data-page="fonctions" data-sky>
+<div class="sky short">
+  <span class="cloud c2"></span><span class="cloud c4"></span>
+  <div class="wrap page-hero">
+    <span class="chip"><i aria-hidden="true"></i>Tout est inclus dans chaque pack</span>
+    <h1>Tout ce qu'il faut pour des clips qui accrochent</h1>
+    <p>De la vidéo brute au clip sous-titré à ta marque, l'IA fait le gros du travail. Toi, tu choisis et tu publies.</p>
+    <div class="row"><a class="btn white big" href="app.html">Essayer gratuitement</a></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <nav class="toc" aria-label="Fonctionnalités">
+    <a href="#montage">Montage IA</a><a href="#silences">Silences et « euh »</a><a href="#soustitres">Sous-titres</a><a href="#cadrage">Cadrage</a><a href="#marque">Logo</a><a href="#lien">Import par lien</a><a href="#note">Note virale</a>
+  </nav>
+
+  <section class="frow" id="montage">
+    <div class="txt rv"><span class="num">01</span><h2>Un montage pensé comme un monteur</h2>
+      <p>L'IA lit toute la transcription et construit chaque clip comme une petite histoire, au lieu de couper 60 secondes au hasard.</p>
+      <ul><li>Raccorde plusieurs passages éloignés : accroche, explication, chute</li><li>Écarte les digressions, les répétitions et les phrases sans sens</li><li>Chaque passage peut être retiré ou remis dans l'éditeur</li></ul></div>
+    <div class="vis rv" style="--d:.1s">
+      <div class="montage" aria-label="Animation : la vidéo est réduite aux meilleurs passages">
+        <div class="mt-stage">
+          <div class="mt-head"><span>conference.mp4</span><span>Durée <b data-dur>12:34</b></span></div>
+          <div class="mt-track" aria-hidden="true">
+            <i class="x" style="--w:9;--a:.6"></i><i class="k" style="--w:6;--a:.95"></i><i class="sil" style="--w:2"></i><i class="k" style="--w:3;--a:.8"></i>
+            <i class="x" style="--w:12;--a:.5"></i><i class="um" style="--w:2.4"></i><i class="k" style="--w:7;--a:.85"></i><i class="sil" style="--w:3"></i>
+            <i class="x" style="--w:10;--a:.55"></i><i class="um" style="--w:2.4"></i><i class="k" style="--w:5;--a:1"></i><i class="x" style="--w:8;--a:.6"></i>
+          </div>
+          <div class="mt-labels" aria-hidden="true"><span>Accroche</span><span style="--d:.1s">Explication</span><span style="--d:.2s">Chute</span></div>
+        </div>
+        <ol class="mt-steps"><li><div><b>Vidéo complète</b></div></li><li><div><b>Meilleurs passages</b></div></li><li><div><b>Silences enlevés</b></div></li><li><div><b>Hors-sujet écarté</b></div></li><li><div><b>Clip prêt</b></div></li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="frow" id="silences">
+    <div class="txt rv"><span class="num">02</span><h2>Silences et hésitations enlevés, au mot près</h2>
+      <p>Les blancs, les « euh », les « hum » et les « ben » disparaissent. Le clip devient rythmé, sans couper les phrases au milieu.</p>
+      <ul><li>Détection mot par mot grâce à la transcription</li><li>Deux interrupteurs dans l'éditeur : silences et hésitations</li><li>Une petite marge est gardée autour des mots pour rester naturel</li></ul></div>
+    <div class="vis rv" style="--d:.1s">
+      <div class="clean" aria-label="Exemple de phrase nettoyée"><span class="lb">Transcription</span>
+        Alors <s>euh</s> le vrai secret, <s style="--d:.5s">hum</s> c'est <s class="sil" style="--d:1s">silence 1,4 s</s> la régularité. <s style="--d:1.5s">ben</s> Chaque jour, <s style="--d:2s">euh</s> un petit pas.</div>
+    </div>
+  </section>
+
+  <section class="frow" id="soustitres">
+    <div class="txt rv"><span class="num">03</span><h2>Sous-titres animés et gabarits de chaîne</h2>
+      <p>Beaucoup de gens regardent sans le son dans leur fil. Tes sous-titres apparaissent mot par mot, le mot prononcé ressort en couleur.</p>
+      <ul><li>3 gabarits : Citation (bandes blanches façon télé), Sous-titres animés, Sobre</li><li>Titre-citation écrit par l'IA, modifiable</li><li>Chaque mot corrigeable à la main</li></ul></div>
+    <div class="vis rv" style="--d:.1s;gap:16px">
+      <div class="pm" aria-hidden="true" style="max-width:200px"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="tv">TA CHAÎNE</span>
+        <div class="qt"><span>« Ta situation n'est</span><span>pas ta destination »</span><small>Message du dimanche</small></div></div>
+      <div class="pm" aria-hidden="true" style="max-width:200px;--pm1:#2E4B6B;--pm2:#14202F;--pmt:#E2574C"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div>
+        <div class="hook"><span>LE CONSEIL DU JOUR</span></div><div class="cap" data-karaoke="BOIS DE L'EAU|DÈS LE RÉVEIL|C'EST LA BASE">BOIS <b>DE</b> L'EAU</div></div>
+    </div>
+  </section>
+
+  <section class="frow" id="cadrage">
+    <div class="txt rv"><span class="num">04</span><h2>Le cadrage vertical suit le visage</h2>
+      <p>Ta vidéo est filmée à l'horizontale ? Le cadre 9:16 suit automatiquement la personne qui parle, même si elle bouge.</p>
+      <ul><li>Détection du visage directement dans ton téléphone</li><li>Ou fond flou, ou cadrage manuel</li><li>Plusieurs niveaux de fluidité du suivi</li></ul></div>
+    <div class="vis rv" style="--d:.1s">
+      <div class="frame" aria-label="Animation : le cadre vertical suit la personne"><div class="ppl"><i class="b"></i><i class="t"></i><i class="h"></i><i class="c"></i></div><span class="face"></span><span class="crop"></span></div>
+    </div>
+  </section>
+
+  <section class="frow" id="marque">
+    <div class="txt rv"><span class="num">05</span><h2>Ton logo et ta couleur sur chaque clip</h2>
+      <p>Ajoute ton logo une fois : il est enregistré dans ton compte et posé sur tous tes clips, à l'endroit et à la taille que tu veux.</p>
+      <ul><li>4 positions, taille et transparence réglables</li><li>Couleur de surlignage des sous-titres à ta marque</li><li>Signature (nom de ta chaîne) en bas du clip</li></ul></div>
+    <div class="vis rv" style="--d:.1s">
+      <div class="brandset">
+        <div class="pm" aria-hidden="true" style="--pm1:#3E5B4F;--pm2:#18221E;--pmt:#E8C547;--hl:#7CF0B5"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="logo-b"></span>
+          <div class="cap" data-karaoke="TON LOGO|PARTOUT|SUR TES CLIPS">TON <b>LOGO</b></div></div>
+        <div class="opts" aria-hidden="true"><span class="lb">Couleur</span><div class="sw"><i style="background:#7CF0B5"></i><i style="background:#FFE600"></i><i style="background:#FF5A5A"></i><i style="background:#4B97FF"></i></div>
+          <span class="lb">Position du logo</span><div class="pos"><i class="on"></i><i></i><i></i><i></i></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="frow" id="lien">
+    <div class="txt rv"><span class="num">06</span><h2>Colle un lien, on s'occupe du reste</h2>
+      <p>Pas besoin de télécharger la vidéo : colle le lien YouTube, Facebook, Instagram, TikTok ou X dans le studio et l'analyse démarre.</p>
+      <ul><li>Quelques crédits par import, rendus automatiquement si l'import échoue</li><li>Fonctionne aussi avec Vimeo et Dailymotion</li><li>Importe seulement des vidéos que tu as le droit de réutiliser</li></ul></div>
+    <div class="vis rv" style="--d:.1s">
+      <div class="linkui" aria-hidden="true"><span class="lb" style="font-size:12px;font-weight:600;color:var(--muted)">Importer par lien</span>
+        <div class="inp">🔗 <span>https://youtube.com/watch?v=podcast-ep12</span><b></b></div>
+        <div class="plats"><span>YouTube</span><span>Facebook</span><span>Instagram</span><span>TikTok</span><span>X</span></div>
+        <div class="bar-p"><i></i></div><span style="font-size:12.5px;color:var(--muted)">Récupération de la vidéo…</span></div>
+    </div>
+  </section>
+
+  <section class="frow" id="note">
+    <div class="txt rv"><span class="num">07</span><h2>Chaque clip noté sur 100</h2>
+      <p>L'IA classe les clips selon leur potentiel viral et t'explique pourquoi. Tu publies d'abord les meilleurs.</p>
+      <ul><li>Note de 0 à 100 et raison en une phrase</li><li>Clips classés du plus fort au plus faible</li><li>Tu gardes, retouches ou supprimes en un geste</li></ul></div>
+    <div class="vis rv" style="--d:.1s">
+      <div class="scores" aria-hidden="true">
+        <div class="it"><b>« C'est la TRAHISON ! »</b><em>94</em><span class="bar"><i style="--v:94%"></i></span><span class="why">Émotion forte et chute inattendue</span></div>
+        <div class="it"><b>Le conseil qui change tout</b><em>88</em><span class="bar"><i style="--v:88%"></i></span><span class="why">Conseil clair, utile tout de suite</span></div>
+        <div class="it"><b>Personne ne s'y attendait</b><em>81</em><span class="bar"><i style="--v:81%"></i></span><span class="why">Bonne accroche, fin un peu longue</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s center">
+    <div class="sh rv"><span class="eyebrow">Et aussi</span><h2>Les petits plus qui changent tout</h2></div>
+    <div class="extras">
+      <div class="extra rv"><span class="ic" aria-hidden="true">📱</span><div><h3>Tout depuis le téléphone</h3><p>Aucun logiciel à installer, aucun ordinateur nécessaire.</p></div></div>
+      <div class="extra rv" style="--d:.06s"><span class="ic" aria-hidden="true">🔒</span><div><h3>Ta vidéo reste chez toi</h3><p>Seul l'audio part pour la transcription. Le montage se fait dans ton navigateur.</p></div></div>
+      <div class="extra rv" style="--d:.12s"><span class="ic" aria-hidden="true">♾️</span><div><h3>Exports illimités</h3><p>Retouche et exporte autant de fois que tu veux, sans filigrane.</p></div></div>
+      <div class="extra rv"><span class="ic" aria-hidden="true">🌍</span><div><h3>Plusieurs langues</h3><p>Français, anglais, arabe, espagnol, portugais et la plupart des grandes langues.</p></div></div>
+      <div class="extra rv" style="--d:.06s"><span class="ic" aria-hidden="true">💾</span><div><h3>Projets sauvegardés</h3><p>Retrouve tes analyses et tes clips à chaque connexion.</p></div></div>
+      <div class="extra rv" style="--d:.12s"><span class="ic" aria-hidden="true">📐</span><div><h3>Format vertical 9:16</h3><p>Prêt pour TikTok, Reels, Shorts, Facebook et les statuts WhatsApp.</p></div></div>
+    </div>
+  </section>
+
+  <section class="s">
+    <div class="final rv">
+      <span class="cloud c1" style="top:10%"></span><span class="cloud c2" style="top:50%"></span>
+      <h2>Essaie toutes ces fonctions gratuitement</h2>
+      <p>Crée ton compte, importe une vidéo et regarde l'IA monter tes premiers clips.</p>
+      <div class="row" style="justify-content:center"><a class="btn white big" href="app.html">Créer mon compte gratuit</a><a class="btn glass big" href="tarifs.html">Voir les tarifs</a></div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/config.js"></script>
+<script src="assets/mock.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+<script src="assets/core.js"></script>
+<script src="assets/site.js"></script>
+<script>
+(function () {
+  const sc = document.querySelector('.scores');
+  if (!sc) return;
+  if (!('IntersectionObserver' in window)) { sc.classList.add('in'); return; }
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { sc.classList.add('in'); io.disconnect(); } }), { threshold: .4 });
+  io.observe(sc);
+})();
+</script>
+</body>
+</html>

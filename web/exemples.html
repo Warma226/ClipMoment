@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Exemples — ClipMoment</title>
+<meta name="description" content="Podcasts, églises, coachs, médias, cours, lives : des exemples de clips que ClipMoment peut tirer de tes vidéos.">
+<meta name="theme-color" content="#1A6FE0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Montserrat:wght@900&family=Roboto+Condensed:wght@400;700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Une carte par cas d'usage : aperçu du clip à gauche, ce que l'IA repère à droite. */
+.filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: -60px; position: relative; z-index: 2; }
+.filters button { font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px;
+  box-shadow: 0 8px 20px -14px rgba(8, 30, 70, .4); }
+.filters button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cases { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 40px; }
+@media (min-width: 1000px) { .cases { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.case { scroll-margin-top: 90px; background: var(--surface); border: 1px solid var(--line); border-radius: 26px; padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: center;
+  transition: transform .3s, box-shadow .3s, opacity .3s; }
+.case:hover { transform: translateY(-3px); box-shadow: 0 24px 50px -36px rgba(8, 30, 70, .5); }
+.case.hide { display: none; }
+@media (min-width: 600px) { .case { grid-template-columns: 190px minmax(0, 1fr); padding: 22px; } }
+.case .shot { border-radius: 20px; padding: 18px; background: var(--g); display: flex; justify-content: center; }
+.case .shot .pm { max-width: 170px; }
+@media (max-width: 599px) { .case .shot .pm { max-width: 190px; } }
+.case .who { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.case .who i { font-style: normal; font-size: 20px; }
+.case h2 { font-size: 23px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; }
+.case p { margin: 8px 0 0; color: var(--muted); }
+.case .lb { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-top: 16px; display: block; }
+.case ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.case li { display: flex; gap: 9px; align-items: flex-start; font-size: 14.5px; }
+.case li::before { content: "✦"; color: var(--accent); flex: none; }
+.case .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.disclaimer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 18px; }
+.ask { margin-top: 56px; background: var(--surface); border: 1px dashed var(--accent); border-radius: 24px; padding: 28px 22px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.ask h2 { font-size: 24px; font-weight: 700; }
+.ask p { margin: 0; color: var(--muted); max-width: 52ch; }
+</style>
+</head>
+<body class="site" data-page="exemples" data-sky>
+<div class="sky short">
+  <span class="cloud c2"></span><span class="cloud c4"></span>
+  <div class="wrap page-hero">
+    <span class="chip"><i aria-hidden="true"></i>Si quelqu'un parle, ça marche</span>
+    <h1>Des clips pour chaque façon de parler</h1>
+    <p>Podcast, prêche, cours ou live : voici ce que l'IA va chercher dans tes vidéos, et le genre de clip qu'elle en tire.</p>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="filters" role="group" aria-label="Filtrer les exemples">
+    <button type="button" aria-pressed="true" data-f="all">Tous</button>
+    <button type="button" aria-pressed="false" data-f="parole">Parole et foi</button>
+    <button type="button" aria-pressed="false" data-f="savoir">Savoir et conseils</button>
+    <button type="button" aria-pressed="false" data-f="media">Médias et lives</button>
+  </div>
+
+  <div class="cases">
+    <article class="case rv" id="podcasts" data-c="media">
+      <div class="shot" style="--g:linear-gradient(135deg,#1A6FE0,#36B4FF)"><div class="pm" aria-hidden="true"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="tv">TON PODCAST</span>
+        <div class="qt"><span>« On m'a dit non</span><span>30 fois avant</span><span>le premier oui »</span><small>Épisode 12 · Entreprendre</small></div></div></div>
+      <div><span class="who"><i aria-hidden="true">🎙️</i>Podcasts et émissions</span><h2>Un épisode d'une heure, une semaine de publications</h2>
+        <p>Les invités disent des phrases fortes au milieu de longues discussions. L'IA les retrouve et les sort du lot.</p>
+        <span class="lb">Ce que l'IA repère</span>
+        <ul><li>Les phrases choc et les révélations</li><li>Les histoires vécues avec une chute</li><li>Les désaccords entre invités</li></ul>
+        <div class="meta"><span class="tag hot">Gabarit Citation</span><span class="tag">Clips de 30 à 60 s</span></div></div>
+    </article>
+
+    <article class="case rv" id="eglises" data-c="parole" style="--d:.06s">
+      <div class="shot" style="--g:linear-gradient(135deg,#6C3FD1,#B07CFF)"><div class="pm" aria-hidden="true" style="--pm1:#4A3B6B;--pm2:#1C1729;--pmt:#F1E9D2"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="tv">MESSAGE</span>
+        <div class="qt"><span>« Ta situation</span><span>n'est pas ta</span><span>destination »</span><small>Culte du dimanche</small></div></div></div>
+      <div><span class="who"><i aria-hidden="true">⛪</i>Églises et mosquées</span><h2>Le message de la semaine, partagé toute la semaine</h2>
+        <p>Une prédication de 45 minutes contient plusieurs moments forts. Chacun devient un clip à partager sur les réseaux et les statuts WhatsApp.</p>
+        <span class="lb">Ce que l'IA repère</span>
+        <ul><li>Les paroles d'encouragement</li><li>Les exhortations et les appels</li><li>Les illustrations et témoignages</li></ul>
+        <div class="meta"><span class="tag hot">Gabarit Citation</span><span class="tag">Clips de 30 à 90 s</span></div></div>
+    </article>
+
+    <article class="case rv" id="coachs" data-c="savoir">
+      <div class="shot" style="--g:linear-gradient(135deg,#E2574C,#FF9A5A)"><div class="pm" aria-hidden="true" style="--pm1:#2E4B6B;--pm2:#14202F;--pmt:#E2574C"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="logo-b"></span>
+        <div class="hook"><span>LA RÈGLE DES 30 JOURS</span></div><div class="cap" data-karaoke="FAIS DIX POMPES|CHAQUE MATIN|PENDANT UN MOIS">FAIS <b>DIX</b> POMPES</div></div></div>
+      <div><span class="who"><i aria-hidden="true">💪</i>Coachs et formateurs</span><h2>Un conseil par clip, ta marque sur chacun</h2>
+        <p>Sport, business, développement personnel : tes vidéos longues regorgent de conseils que l'IA transforme en petits formats percutants.</p>
+        <span class="lb">Ce que l'IA repère</span>
+        <ul><li>Les conseils concrets et les règles simples</li><li>Les erreurs à éviter</li><li>Les avant / après et les résultats</li></ul>
+        <div class="meta"><span class="tag hot">Gabarit Sous-titres animés</span><span class="tag">Clips de 15 à 30 s</span></div></div>
+    </article>
+
+    <article class="case rv" id="medias" data-c="media" style="--d:.06s">
+      <div class="shot" style="--g:linear-gradient(135deg,#0E8A6A,#3FD1A0)"><div class="pm" aria-hidden="true" style="--pm1:#3B4A5B;--pm2:#161C23;--pmt:#2B3A4F"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="tv">TA CHAÎNE INFO</span>
+        <div class="qt"><span>« Les jeunes veulent</span><span>du travail, pas</span><span>des promesses »</span><small>Grand entretien</small></div></div></div>
+      <div><span class="who"><i aria-hidden="true">📺</i>Médias et journalistes</span><h2>Les déclarations clés, publiées avant les autres</h2>
+        <p>Interviews, débats, conférences de presse : l'IA isole les phrases qui feront réagir, avec le titre-citation déjà écrit.</p>
+        <span class="lb">Ce que l'IA repère</span>
+        <ul><li>Les annonces et les prises de position</li><li>Les réponses tranchées</li><li>Les échanges tendus</li></ul>
+        <div class="meta"><span class="tag hot">Gabarit Citation</span><span class="tag">Clips de 20 à 60 s</span></div></div>
+    </article>
+
+    <article class="case rv" id="cours" data-c="savoir">
+      <div class="shot" style="--g:linear-gradient(135deg,#C98A00,#FFD45A)"><div class="pm" aria-hidden="true" style="--pm1:#5B5A3E;--pm2:#23231A;--pmt:#3D6B8F"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div>
+        <div class="hook" style="--hk:#fff"><span>COMPRENDRE EN 40 S</span></div><div class="sob">Une fraction, c'est juste un partage équitable.</div></div></div>
+      <div><span class="who"><i aria-hidden="true">🎓</i>Profs et cours en ligne</span><h2>Tes cours deviennent des capsules qui donnent envie</h2>
+        <p>Une explication bien faite peut toucher des milliers d'élèves. L'IA découpe tes cours en notions courtes et claires.</p>
+        <span class="lb">Ce que l'IA repère</span>
+        <ul><li>Les définitions et les astuces</li><li>Les exercices corrigés pas à pas</li><li>Les pièges classiques des examens</li></ul>
+        <div class="meta"><span class="tag hot">Gabarit Sobre</span><span class="tag">Clips de 30 à 90 s</span></div></div>
+    </article>
+
+    <article class="case rv" id="lives" data-c="media" style="--d:.06s">
+      <div class="shot" style="--g:linear-gradient(135deg,#D12E6A,#FF7BA8)"><div class="pm" aria-hidden="true" style="--pm1:#6B3B4A;--pm2:#29171C;--pmt:#F5F5F5;--hl:#FF7BA8"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="logo-b"></span>
+        <div class="hook" style="--hk:#FF7BA8"><span>EN LIVE HIER SOIR</span></div><div class="cap" data-karaoke="ÇA C'EST LA QUESTION|QUE PERSONNE|N'OSE POSER">ÇA <b>C'EST</b> LA QUESTION</div></div></div>
+      <div><span class="who"><i aria-hidden="true">🔴</i>Lives et débats</span><h2>Deux heures de live, les meilleurs moments en clips</h2>
+        <p>Personne ne revoit un live en entier. Colle le lien du live Facebook, TikTok ou YouTube et récupère ses temps forts.</p>
+        <span class="lb">Ce que l'IA repère</span>
+        <ul><li>Les réactions fortes et les fous rires</li><li>Les questions du public et les réponses</li><li>Les moments de débat</li></ul>
+        <div class="meta"><span class="tag hot">Import par lien</span><span class="tag">Gabarit Sous-titres animés</span></div></div>
+    </article>
+  </div>
+  <p class="disclaimer">Exemples d'illustration : les phrases et les noms de chaînes sont inventés pour montrer les gabarits.</p>
+
+  <div class="ask rv">
+    <h2>Ton domaine n'est pas dans la liste ?</h2>
+    <p>Si ta vidéo contient de la parole, l'IA sait en tirer des clips. Essaie avec tes minutes offertes, ou écris-nous pour en parler.</p>
+    <div class="row" style="justify-content:center"><a class="btn primary" href="app.html">Essayer avec ma vidéo</a><a class="btn" href="contact.html">Nous écrire</a></div>
+  </div>
+
+  <section class="s">
+    <div class="final rv">
+      <span class="cloud c1" style="top:10%"></span><span class="cloud c2" style="top:50%"></span>
+      <h2>À ton tour de transformer tes vidéos</h2>
+      <p>Importe ta première vidéo : l'IA te propose tes clips en quelques minutes.</p>
+      <a class="btn white big" href="app.html">Créer mon compte gratuit</a>
+    </div>
+  </section>
+</main>
+
+<script src="assets/config.js"></script>
+<script src="assets/mock.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+<script src="assets/core.js"></script>
+<script src="assets/site.js"></script>
+<script>
+(function () {
+  const btns = document.querySelectorAll('.filters button');
+  btns.forEach((b) => b.addEventListener('click', () => {
+    btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    const f = b.dataset.f;
+    document.querySelectorAll('.case').forEach((c) => { c.classList.toggle('hide', f !== 'all' && c.dataset.c !== f); c.classList.add('in'); });
+  }));
+})();
+</script>
+</body>
+</html>

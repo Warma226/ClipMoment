@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Contact — ClipMoment</title>
+<meta name="description" content="Une question, un paiement, un partenariat ? Écris à l'équipe ClipMoment sur WhatsApp. Découvre aussi pourquoi ClipMoment existe.">
+<meta name="theme-color" content="#1A6FE0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Contact à gauche (formulaire qui ouvre WhatsApp), raccourcis à droite ; puis « À propos ». */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: -64px; position: relative; z-index: 2; }
+@media (min-width: 900px) { .grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 26px; padding: clamp(20px, 3vw, 28px); display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 30px 60px -44px rgba(8, 30, 70, .5); }
+.card h2 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.card .note { font-size: 14px; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 560px) { .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.subjects { display: flex; flex-wrap: wrap; gap: 8px; }
+.subjects label { position: relative; }
+.subjects input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.subjects span { display: inline-block; padding: 8px 13px; border-radius: 999px; border: 1px solid var(--line); font-weight: 600; font-size: 14px; cursor: pointer; }
+.subjects input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.subjects input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.wa { background: #1FAF54; border-color: #1FAF54; color: #fff; box-shadow: 0 10px 24px -12px #1FAF54; }
+.btn.wa:hover { filter: brightness(1.06); }
+.side { display: flex; flex-direction: column; gap: 14px; }
+.quick { display: flex; gap: 14px; align-items: flex-start; text-decoration: none; padding: 18px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); transition: transform .25s, border-color .25s; }
+.quick:hover { transform: translateY(-3px); border-color: var(--accent); }
+.quick .ic { flex: none; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 21px; background: var(--accent-soft); }
+.quick b { display: block; font-size: 16px; }
+.quick span { color: var(--muted); font-size: 14px; }
+.wa-card { background: linear-gradient(150deg, #1FAF54, #128C7E); color: #fff; border: 0; }
+.wa-card .ic { background: rgba(255, 255, 255, .2); }
+.wa-card span { color: rgba(255, 255, 255, .9); }
+.wa-card b.num { font: 600 15px var(--mono); margin-top: 4px; }
+
+.about { display: grid; grid-template-columns: minmax(0, 1fr); gap: 30px; align-items: center; }
+@media (min-width: 900px) { .about { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; } }
+.about h2 { font-size: clamp(28px, 4.5vw, 42px); font-weight: 700; letter-spacing: -.025em; line-height: 1.1; margin-top: 14px; }
+.about p { color: var(--muted); font-size: 16px; margin: 14px 0 0; max-width: 54ch; }
+.vals { display: flex; flex-direction: column; gap: 12px; }
+.val { display: flex; gap: 14px; align-items: flex-start; padding: 18px; border-radius: 20px; background: linear-gradient(160deg, var(--folder), var(--folder-2)); }
+.val .ic { flex: none; width: 44px; height: 44px; border-radius: 14px; background: var(--surface); display: grid; place-items: center; font-size: 21px; }
+.val h3 { font-size: 17px; font-weight: 700; }
+.val p { margin: 4px 0 0; font-size: 14.5px; color: var(--muted); }
+</style>
+</head>
+<body class="site" data-page="contact" data-sky>
+<div class="sky short">
+  <span class="cloud c2"></span><span class="cloud c4"></span>
+  <div class="wrap page-hero">
+    <span class="chip"><i aria-hidden="true"></i>Une vraie personne te répond</span>
+    <h1>Parlons de tes vidéos</h1>
+    <p>Une question, un souci de paiement, une idée ou un partenariat : écris-nous, on te répond sur WhatsApp.</p>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="grid">
+    <form class="card rv" id="form" novalidate>
+      <h2>Envoyer un message</h2>
+      <p class="note">Ton message s'ouvre dans WhatsApp, déjà rédigé. Il ne te reste qu'à appuyer sur Envoyer.</p>
+      <div class="two">
+        <label class="field"><span class="lbl">Ton nom</span><input type="text" id="c-name" autocomplete="name" maxlength="80" placeholder="Ex. : Awa Diallo"></label>
+        <label class="field"><span class="lbl">E-mail du compte (facultatif)</span><input type="email" id="c-email" autocomplete="email" maxlength="120" placeholder="toi@exemple.com"></label>
+      </div>
+      <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px"><legend class="lbl" style="padding:0;margin-bottom:8px">Sujet</legend>
+        <div class="subjects">
+          <label><input type="radio" name="subj" value="Une question" checked><span>Une question</span></label>
+          <label><input type="radio" name="subj" value="Paiement ou crédits"><span>Paiement ou crédits</span></label>
+          <label><input type="radio" name="subj" value="Un problème technique"><span>Problème technique</span></label>
+          <label><input type="radio" name="subj" value="Agence ou partenariat"><span>Agence ou partenariat</span></label>
+        </div>
+      </fieldset>
+      <label class="field"><span class="lbl">Ton message</span><textarea id="c-msg" maxlength="1500" rows="5" placeholder="Explique-nous en quelques mots…"></textarea></label>
+      <div class="alert err" id="c-err" hidden></div>
+      <button class="btn wa big" type="submit"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.1.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3z"/></svg>Envoyer sur WhatsApp</button>
+    </form>
+
+    <div class="side">
+      <a class="quick wa-card rv" id="wa-link" href="#" target="_blank" rel="noopener" hidden><span class="ic" aria-hidden="true">💬</span><div><b>WhatsApp</b><span>Le plus rapide pour nous joindre</span><b class="num" id="wa-num"></b></div></a>
+      <a class="quick rv" href="tarifs.html" style="--d:.06s"><span class="ic" aria-hidden="true">💳</span><div><b>Payer ou recharger</b><span>Les packs et la marche à suivre Orange Money / Wave</span></div></a>
+      <a class="quick rv" href="index.html#faq" style="--d:.12s"><span class="ic" aria-hidden="true">❓</span><div><b>Questions fréquentes</b><span>Durée des analyses, liens YouTube, minutes non utilisées…</span></div></a>
+      <a class="quick rv" href="app.html" style="--d:.18s"><span class="ic" aria-hidden="true">🎬</span><div><b>Ouvrir le studio</b><span>Crée ton compte et essaie avec tes minutes offertes</span></div></a>
+    </div>
+  </div>
+
+  <section class="s about" id="a-propos">
+    <div class="rv"><span class="eyebrow">À propos</span><h2>Pourquoi <span class="grad">ClipMoment</span> existe</h2>
+      <p>Les créateurs, les églises, les coachs et les médias d'Afrique francophone filment des heures de contenu de qualité. Mais monter des clips prend des soirées entières, et les outils existants coûtent cher, se paient en dollars par carte bancaire et demandent un ordinateur.</p>
+      <p>ClipMoment fait ce travail avec l'IA, depuis un simple téléphone, avec un paiement en mobile money et des prix en francs CFA.</p></div>
+    <div class="vals">
+      <div class="val rv"><span class="ic" aria-hidden="true">📱</span><div><h3>Pensé pour le téléphone</h3><p>Tout se fait dans le navigateur : import, montage, sous-titres et export.</p></div></div>
+      <div class="val rv" style="--d:.08s"><span class="ic" aria-hidden="true">💸</span><div><h3>Payable en mobile money</h3><p>Orange Money ou Wave, sans carte bancaire et sans engagement.</p></div></div>
+      <div class="val rv" style="--d:.16s"><span class="ic" aria-hidden="true">🔒</span><div><h3>Tes vidéos restent chez toi</h3><p>Seul l'audio est envoyé pour la transcription. Ta vidéo ne quitte pas ton appareil.</p></div></div>
+    </div>
+  </section>
+
+  <section class="s">
+    <div class="final rv">
+      <span class="cloud c1" style="top:10%"></span><span class="cloud c2" style="top:50%"></span>
+      <h2>Prêt à essayer ?</h2>
+      <p>Crée ton compte gratuit et monte tes premiers clips avec tes minutes offertes.</p>
+      <a class="btn white big" href="app.html">Créer mon compte gratuit</a>
+    </div>
+  </section>
+</main>
+
+<script src="assets/config.js"></script>
+<script src="assets/mock.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+<script src="assets/core.js"></script>
+<script src="assets/site.js"></script>
+<script>
+(async function () {
+  const $ = (s) => document.querySelector(s);
+  let digits = '';
+  try {
+    const s = await CM.loadSettings();
+    const wa = s && s.payment && s.payment.whatsapp;
+    digits = String(wa || '').replace(/[^\d]/g, '');
+    if (digits.length >= 8) { const a = $('#wa-link'); a.href = 'https://wa.me/' + digits; $('#wa-num').textContent = wa; a.hidden = false; }
+  } catch (e) { /* hors ligne : le formulaire affichera un message */ }
+  try { const ses = await CM.auth.session(); if (ses && ses.user && ses.user.email) $('#c-email').value = ses.user.email; } catch (e) { /* */ }
+  $('#form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const err = $('#c-err'); err.hidden = true;
+    const msg = $('#c-msg').value.trim();
+    if (!msg) { err.textContent = 'Écris ton message avant d\'envoyer.'; err.hidden = false; $('#c-msg').focus(); return; }
+    if (digits.length < 8) { err.textContent = 'Le numéro WhatsApp n\'est pas encore disponible. Réessaie dans un moment.'; err.hidden = false; return; }
+    const name = $('#c-name').value.trim(), mail = $('#c-email').value.trim(), subj = (document.querySelector('input[name=subj]:checked') || {}).value || 'Une question';
+    const text = 'Bonjour ' + CM.brand + ' 👋\n' + (name ? 'Je suis ' + name + '. ' : '') + 'Sujet : ' + subj + '.' + (mail ? '\nMon compte : ' + mail : '') + '\n\n' + msg;
+    window.open('https://wa.me/' + digits + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+  });
+})();
+</script>
+</body>
+</html>

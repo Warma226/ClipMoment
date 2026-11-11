@@ -4,59 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ClipMoment — Tes vidéos longues en clips viraux</title>
-<meta name="description" content="Importe une interview, un podcast ou un live : l'IA trouve les meilleurs passages et en fait des clips verticaux sous-titrés pour TikTok, Reels et Shorts.">
+<meta name="description" content="Importe une interview, un podcast ou un live : l'IA trouve les meilleurs passages, enlève les silences et les « euh », et monte des clips verticaux sous-titrés pour TikTok, Reels et Shorts.">
 <meta property="og:title" content="ClipMoment — Tes vidéos longues en clips viraux">
-<meta property="og:description" content="L'IA trouve les meilleurs passages de tes vidéos et les transforme en clips verticaux sous-titrés.">
+<meta property="og:description" content="L'IA trouve les meilleurs passages de tes vidéos et les monte en clips verticaux sous-titrés.">
 <meta name="theme-color" content="#1A6FE0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Montserrat:wght@900&family=Roboto+Condensed:wght@400;700&display=swap">
 <link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/site.css">
 <style>
-/* Mise en page : ciel bleu plein écran en ouverture, puis sections centrées sur fond clair. */
-body { overflow-x: hidden; }
-
-/* ---------- Ciel ---------- */
-.sky { position: relative; isolation: isolate; overflow: hidden; color: #fff;
-  background: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 34%, var(--sky-3) 66%, var(--bg) 100%); }
-.cloud { position: absolute; z-index: -1; border-radius: 50%; background: rgba(255, 255, 255, .55); filter: blur(28px); pointer-events: none; }
-.c1 { width: 520px; height: 160px; left: -120px; top: 34%; }
-.c2 { width: 420px; height: 130px; right: -90px; top: 14%; opacity: .7; }
-.c3 { width: 680px; height: 220px; left: 18%; bottom: 6%; background: rgba(255, 255, 255, .7); }
-.c4 { width: 300px; height: 110px; left: 40%; top: 6%; opacity: .45; }
-@media (prefers-color-scheme: dark) { .cloud { background: rgba(170, 205, 255, .16); } .c3 { background: rgba(170, 205, 255, .18); } }
-
-.nav { display: flex; align-items: center; gap: 10px; min-height: 68px; padding-top: env(safe-area-inset-top, 0px); }
-.nav .logo { color: #fff; }
-.nav .links { display: none; gap: 4px; margin-inline: auto; }
-.nav .links a { color: rgba(255, 255, 255, .92); text-decoration: none; font-size: 14.5px; font-weight: 500; padding: 8px 12px; border-radius: 999px; }
-.nav .links a:hover { background: rgba(255, 255, 255, .14); }
-.nav .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-.nav .login { color: #fff; text-decoration: none; font-weight: 600; font-size: 14.5px; padding: 8px 10px; }
-.btn.white { background: #fff; color: #0E1A2B; border-color: #fff; }
-.btn.white:hover { filter: brightness(.97); }
-.btn.glass { background: rgba(8, 40, 100, .2); color: #fff; border-color: rgba(255, 255, 255, .5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-@media (min-width: 860px) { .nav .links { display: flex; } .nav .right { margin-left: 0; } }
-
+/* Accueil : ciel bleu avec téléphone animé, puis démonstration du montage, chiffres, gabarits, cas d'usage, tarifs, FAQ. */
 .hero { text-align: center; display: flex; flex-direction: column; align-items: center; padding-block: 34px 0; }
-.chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 500;
-  background: rgba(255, 255, 255, .18); border: 1px solid rgba(255, 255, 255, .45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.chip i { width: 7px; height: 7px; border-radius: 50%; background: #7CF0B5; box-shadow: 0 0 0 3px rgba(124, 240, 181, .3); }
-.hero h1 { font-size: clamp(36px, 7.6vw, 68px); line-height: 1.04; font-weight: 700; letter-spacing: -.03em; margin-top: 18px; max-width: 15ch;
+.hero h1 { font-size: clamp(36px, 7.6vw, 70px); line-height: 1.04; font-weight: 700; letter-spacing: -.03em; margin-top: 18px; max-width: 15ch;
   text-shadow: 0 2px 24px rgba(10, 40, 90, .18); }
-.hero p { font-size: clamp(16px, 2.2vw, 18px); max-width: 48ch; margin: 16px auto 24px; color: rgba(255, 255, 255, .9); }
+.hero h1 .rot { color: #FFE600; text-shadow: 0 2px 0 rgba(0, 0, 0, .15); }
+.hero p { font-size: clamp(16px, 2.2vw, 18px); max-width: 50ch; margin: 16px auto 24px; color: rgba(255, 255, 255, .92); }
 .hero .row { justify-content: center; }
+.trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-top: 18px; font-size: 13.5px; font-weight: 500; color: rgba(255, 255, 255, .92); }
+.trust span::before { content: "✓"; margin-right: 6px; font-weight: 700; }
 
-/* Téléphone et cartes flottantes */
-.stage { position: relative; width: min(100%, 640px); margin: 44px auto 0; display: flex; justify-content: center; padding-bottom: 0; }
-.phone { position: relative; z-index: 2; width: min(264px, 66vw); aspect-ratio: 9/18.5; border-radius: 40px 40px 0 0; padding: 9px 9px 0; background: #0B0F17;
+.stage { position: relative; width: min(100%, 680px); margin: 44px auto 0; display: flex; justify-content: center; }
+.phone { position: relative; z-index: 2; width: min(270px, 66vw); aspect-ratio: 9/18.5; border-radius: 40px 40px 0 0; padding: 9px 9px 0; background: #0B0F17;
   box-shadow: 0 30px 80px -30px rgba(8, 30, 70, .55); }
 .phone::before { content: ""; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 34%; height: 20px; border-radius: 999px; background: #0B0F17; z-index: 3; }
-.screen { position: relative; width: 100%; height: 100%; border-radius: 32px 32px 0 0; overflow: hidden;
-  background: radial-gradient(120% 70% at 50% 30%, #56423F 0%, #221C24 55%, #0E0F15 100%); }
-.screen .stripes { position: absolute; inset: 0 0 50% 0; background: repeating-linear-gradient(90deg, rgba(255, 110, 50, .2) 0 6px, transparent 6px 22px);
-  -webkit-mask: linear-gradient(#000, transparent); mask: linear-gradient(#000, transparent); }
+.screen { position: relative; width: 100%; height: 100%; border-radius: 32px 32px 0 0; overflow: hidden; background: radial-gradient(120% 70% at 50% 30%, #56423F 0%, #221C24 55%, #0E0F15 100%); }
 .screen .person { position: absolute; left: 50%; bottom: -4%; width: 80%; aspect-ratio: 1/1.3; transform: translateX(-50%); }
 .screen .person i { position: absolute; left: 50%; transform: translateX(-50%); }
 .screen .person .body { bottom: 0; width: 100%; height: 50%; border-radius: 46% 46% 0 0; background: #151820; }
@@ -67,200 +40,227 @@ body { overflow-x: hidden; }
 .screen .demo-vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; opacity: 0; transition: opacity .6s; }
 .screen .demo-vid.ready { opacity: 1; }
 .screen .shade { position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(0, 0, 0, .55)); pointer-events: none; }
-.screen .tv { position: absolute; top: 11%; right: 7%; background: #fff; color: var(--accent); font: italic 900 9.5px/1 Montserrat, sans-serif; padding: 4px 6px; }
-.screen .quote { position: absolute; left: 6%; right: 6%; top: 58%; display: flex; flex-direction: column; align-items: flex-start; }
+.screen .tv { position: absolute; top: 11%; right: 7%; background: #fff; color: #1B74E8; font: italic 900 9.5px/1 Montserrat, sans-serif; padding: 4px 6px; }
+.screen .quote { position: absolute; left: 6%; right: 6%; top: 57%; display: flex; flex-direction: column; align-items: flex-start; }
 .screen .quote span { background: #fff; color: #0B0B0B; font: 700 14px/1.26 "Roboto Condensed", "Arial Narrow", sans-serif; padding: 1px 6px; }
 .screen .quote small { background: #fff; color: #222; font: 400 9.5px/1.3 "Roboto Condensed", "Arial Narrow", sans-serif; padding: 2px 5px; margin-top: 4px; }
-.screen .cap { position: absolute; left: 0; right: 0; top: 81%; text-align: center; font: 900 17px/1 Montserrat, "Arial Black", sans-serif; color: #fff;
+.screen .cap { position: absolute; left: 4%; right: 4%; top: 81%; text-align: center; font: 900 17px/1.1 Montserrat, "Arial Black", sans-serif; color: #fff;
   -webkit-text-stroke: 1px #000; text-shadow: 0 2px 0 #000; }
-.screen .cap b { color: #FFE600; font-weight: 900; display: inline-block; animation: pop 1.6s infinite; }
-@keyframes pop { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.12); } 30% { transform: scale(1); } }
+.screen .cap b { color: #FFE600; font-weight: 900; display: inline-block; transform: scale(1.1); }
+.screen .rec { position: absolute; top: 11%; left: 7%; display: flex; align-items: center; gap: 5px; font: 600 9px/1 var(--mono); color: #fff; background: rgba(0, 0, 0, .45); padding: 4px 7px; border-radius: 999px; }
+.screen .rec i { width: 6px; height: 6px; border-radius: 50%; background: #FF4D4D; animation: blink2 1.2s infinite; }
+@keyframes blink2 { 50% { opacity: .2; } }
 
-.float { position: absolute; z-index: 3; background: #fff; color: #0E1A2B; border-radius: 16px; padding: 12px 14px; text-align: left;
-  box-shadow: 0 18px 40px -16px rgba(8, 30, 70, .35); }
-.f-score { left: 2%; top: 30%; }
-.f-score .big { font: 700 22px/1.1 var(--display); letter-spacing: -.02em; }
+.float { position: absolute; z-index: 3; background: #fff; color: #0E1A2B; border-radius: 16px; padding: 12px 14px; text-align: left; box-shadow: 0 18px 40px -16px rgba(8, 30, 70, .35); }
+.f-score { left: 2%; top: 28%; animation-delay: -1s; }
+.f-score .big { font: 700 24px/1.1 var(--display); letter-spacing: -.02em; }
 .f-score .up { display: inline-flex; gap: 4px; align-items: center; font-size: 11.5px; color: #12805A; font-weight: 600; margin-top: 3px; }
-.f-score .lb { font-size: 11px; color: #5A6A80; }
-.f-caps { right: 0; top: 48%; width: 172px; }
-.f-caps .lb { font-size: 11px; color: #5A6A80; margin-bottom: 6px; }
-.f-caps .w { display: flex; gap: 4px; flex-wrap: wrap; }
+.f-score .lb, .f-cut .lb, .f-caps .lb { font-size: 11px; color: #5A6A80; }
+.f-cut { left: 0; top: 58%; width: 170px; animation-delay: -2.5s; }
+.f-cut .w { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.f-cut .w span { font: 600 11px/1 var(--body); padding: 5px 7px; border-radius: 7px; background: #EEF4FC; }
+.f-cut .w s { font: 600 11px/1 var(--body); padding: 5px 7px; border-radius: 7px; background: #FDE7E3; color: #C0362C; }
+.f-caps { right: 0; top: 46%; width: 176px; animation-delay: -3.5s; }
+.f-caps .w { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
 .f-caps .w span { font: 600 11px/1 var(--body); padding: 5px 7px; border-radius: 7px; background: #EEF4FC; }
 .f-caps .w span.on { background: #FFE600; }
-.f-swap { right: 15%; top: 18%; width: 40px; height: 40px; padding: 0; border-radius: 50%; display: grid; place-items: center; }
-.f-swap svg { width: 18px; height: 18px; }
-.rating { position: absolute; z-index: 3; left: 0; bottom: 18%; text-align: left; color: #0E1A2B; }
-.rating .gift { width: 34px; height: 34px; border-radius: 11px; background: var(--accent); color: #fff; display: grid; place-items: center; }
-.rating .gift svg { width: 18px; height: 18px; }
-.rating b { display: block; font: 700 26px/1.1 var(--display); letter-spacing: -.02em; margin-top: 4px; }
-.rating span { font-size: 11.5px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
-@media (prefers-color-scheme: dark) { .rating { color: #EAF1FB; } }
-@media (max-width: 400px) { .nav .login { display: none; } }
-@media (max-width: 560px) {
-  .f-score { left: 0; top: 24%; padding: 9px 11px; } .f-score .big { font-size: 18px; }
-  .f-caps { right: 0; top: 54%; width: 132px; padding: 9px; }
-  .f-caps .w span { font-size: 10px; padding: 4px 6px; }
-  .f-swap { right: 4%; top: 12%; }
-  .rating { display: none; }
+.f-plat { right: 6%; top: 16%; display: flex; gap: 6px; padding: 9px; border-radius: 14px; animation-delay: -.5s; }
+.f-plat span { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; font: 800 12px var(--display); color: #fff; }
+@media (max-width: 600px) {
+  .f-score { left: 0; top: 20%; padding: 9px 11px; } .f-score .big { font-size: 18px; }
+  .f-cut { top: 62%; width: 128px; padding: 9px; } .f-cut .w span, .f-cut .w s { font-size: 10px; padding: 4px 5px; }
+  .f-caps { right: 0; top: 40%; width: 124px; padding: 9px; } .f-caps .w span { font-size: 10px; padding: 4px 5px; }
+  .f-plat, .f-cut { display: none; }
 }
 
-/* ---------- Sections ---------- */
-section.s { padding-block: 64px; }
-.center { text-align: center; display: flex; flex-direction: column; align-items: center; }
-.sh h2 { font-size: clamp(28px, 4.8vw, 42px); font-weight: 700; letter-spacing: -.025em; margin-top: 14px; line-height: 1.1; }
-.sh p { color: var(--muted); max-width: 54ch; margin: 12px auto 0; }
+.platforms { padding-block: 40px 6px; display: flex; flex-direction: column; gap: 16px; }
+.platforms .lb { font-weight: 600; font-size: 15px; text-align: center; color: var(--muted); }
 
-.platforms { padding-block: 34px 10px; }
-.platforms .lb { font-weight: 600; font-size: 15px; }
-.plist { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 26px; margin-top: 16px; }
-.plist span { display: inline-flex; align-items: center; gap: 8px; font: 700 18px/1 var(--display); letter-spacing: -.01em; color: var(--ink); opacity: .78; }
-.plist span i { width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg, var(--sky-2), var(--accent)); }
-
-/* Cartes en forme de dossier */
-.folders, .steps3, .feats { width: 100%; }
-.folders { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px 18px; margin-top: 44px; text-align: left; }
+/* Dossiers */
+.folders { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 22px 18px; margin-top: 44px; text-align: left; width: 100%; }
 .folder { position: relative; margin-top: 22px; padding: 18px; border-radius: 0 24px 24px 24px; background: linear-gradient(180deg, var(--folder) 0%, var(--folder-2) 100%);
-  display: flex; flex-direction: column; gap: 16px; }
+  display: flex; flex-direction: column; gap: 16px; transition: transform .3s; }
+.folder:hover { transform: translateY(-4px); }
 .folder::before { content: ""; position: absolute; left: 0; top: -22px; width: 48%; height: 24px; background: var(--folder); border-radius: 18px 22px 0 0; }
-.folder::after { content: ""; position: absolute; left: calc(48% - 2px); top: -12px; width: 26px; height: 14px;
-  background: radial-gradient(circle at 100% 0, transparent 13px, var(--folder) 14px); }
-.folder .ui { background: var(--surface); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 9px; min-height: 170px;
-  box-shadow: 0 10px 30px -18px rgba(8, 30, 70, .35); }
+.folder::after { content: ""; position: absolute; left: calc(48% - 2px); top: -12px; width: 26px; height: 14px; background: radial-gradient(circle at 100% 0, transparent 13px, var(--folder) 14px); }
+.folder .ui { background: var(--surface); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 9px; min-height: 170px; box-shadow: 0 10px 30px -18px rgba(8, 30, 70, .35); }
 .folder h3 { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
 .folder p { margin: 4px 0 0; color: var(--muted); font-size: 14.5px; }
 .ui .lb { font-size: 12px; font-weight: 600; color: var(--muted); }
 .ui .inp { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); font-size: 13px; color: var(--muted); }
 .ui .inp b { color: var(--ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ui .bar-p i { width: 64%; }
+.ui .bar-p i { width: 0; animation: fill 3.5s ease-in-out infinite; }
+@keyframes fill { 0% { width: 5%; } 80%, 100% { width: 100%; } }
 .ui .wrow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--sunk); font-size: 13px; }
 .ui .wrow .t { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
 .ui .wrow .sc { margin-left: auto; font-weight: 700; color: var(--accent); }
-.ui .price { font: 700 34px/1 var(--display); letter-spacing: -.03em; margin-top: 4px; }
+.ui .price { font: 700 32px/1 var(--display); letter-spacing: -.03em; margin-top: 4px; }
 .ui .mini { font-size: 12.5px; color: var(--muted); }
 .ui .pay { display: flex; gap: 6px; margin-top: auto; }
 .ui .pay span { flex: 1; text-align: center; padding: 8px; border-radius: 10px; font-size: 12.5px; font-weight: 600; background: var(--sunk); }
 
 /* Étapes */
-.steps3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 40px; text-align: left; }
-.step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 22px; display: flex; flex-direction: column; gap: 8px; }
-.step .n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font: 600 14px var(--mono); }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 16px; margin-top: 40px; text-align: left; width: 100%; counter-reset: st; }
+.step { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 22px; display: flex; flex-direction: column; gap: 8px; counter-increment: st; overflow: hidden; }
+.step::after { content: counter(st); position: absolute; right: 12px; bottom: -22px; font: 800 110px/1 var(--display); color: var(--accent); opacity: .08; }
+.step .ic { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.step .ic svg { width: 21px; height: 21px; }
 .step h3 { font-size: 18px; font-weight: 700; }
 .step p { margin: 0; color: var(--muted); font-size: 14.5px; }
 
-/* Fonctions */
-.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; margin-top: 40px; text-align: left; }
-.feat { padding: 20px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); display: flex; gap: 14px; align-items: flex-start; }
-.feat .ic { flex: none; width: 40px; height: 40px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
-.feat .ic svg { width: 20px; height: 20px; }
-.feat h3 { font-size: 16.5px; font-weight: 700; }
-.feat p { margin: 4px 0 0; color: var(--muted); font-size: 14.5px; }
+/* Gabarits */
+.tpls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 3vw, 34px); margin-top: 44px; width: 100%; max-width: 820px; }
+.tpl { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.tpl:nth-child(2) { transform: translateY(-18px); }
+.tpl .nm { font-weight: 700; font-size: 15px; }
+.tpl .nm span { display: block; color: var(--muted); font-weight: 400; font-size: 13px; }
+@media (max-width: 520px) { .tpls .pm { border-radius: 16px; box-shadow: 0 0 0 4px #0B0F17, 0 18px 30px -18px rgba(8, 30, 70, .6); } .tpls .pm .qt span { font-size: 8.5px; } .tpls .pm .cap { font-size: 10px; }
+  .tpls .pm .hook span { font-size: 8.5px; } .tpls .pm .sob { font-size: 8.5px; } .tpls .pm .tv { font-size: 6px; } .tpl .nm span { display: none; } }
 
-/* Tarifs */
-.price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 40px; width: 100%; text-align: left; }
-.plan { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 6px; }
+/* Cas d'usage */
+.uses { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 14px; margin-top: 40px; width: 100%; text-align: left; }
+.use { position: relative; overflow: hidden; border-radius: var(--r); padding: 22px; min-height: 190px; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+  text-decoration: none; background: var(--g); transition: transform .3s, box-shadow .3s; }
+.use:hover { transform: translateY(-4px); box-shadow: 0 24px 40px -24px rgba(8, 30, 70, .6); }
+.use .em { position: absolute; top: 16px; right: 18px; font-size: 40px; transition: transform .3s; }
+.use:hover .em { transform: rotate(-8deg) scale(1.1); }
+.use h3 { font-size: 20px; font-weight: 700; }
+.use p { margin: 0; font-size: 14px; opacity: .9; }
+
+/* Tarifs (résumé) */
+.price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 16px; margin-top: 40px; width: 100%; text-align: left; }
+.plan { background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 6px; transition: transform .3s; }
+.plan:hover { transform: translateY(-4px); }
 .plan.top { background: linear-gradient(180deg, var(--sky-1), var(--sky-2)); color: #fff; border-color: transparent; box-shadow: 0 24px 50px -24px var(--accent); }
 .plan .tag { align-self: flex-start; }
-.plan.top .tag { background: rgba(255, 255, 255, .2); color: #fff; }
-.plan b { font: 700 40px/1 var(--display); letter-spacing: -.03em; margin-top: 10px; }
-.plan .sub { font-size: 14px; opacity: .75; }
-.plan .amt { font-size: 20px; font-weight: 700; margin-top: 14px; }
+.plan.top .tag { background: #FFC233; color: #3A2600; }
+.plan .nm { font-weight: 700; font-size: 18px; margin-top: 8px; }
+.plan b { font: 700 38px/1 var(--display); letter-spacing: -.03em; margin-top: 8px; }
+.plan b small { font-size: 15px; font-weight: 500; opacity: .75; letter-spacing: 0; }
+.plan .sub { font-size: 14px; opacity: .8; }
 .plan .btn { margin-top: 16px; }
 .plan.top .btn { background: #fff; color: #0E1A2B; border-color: #fff; box-shadow: none; }
 
 /* FAQ */
 .faq { max-width: 760px; margin: 36px auto 0; width: 100%; text-align: left; display: flex; flex-direction: column; gap: 10px; }
-.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; transition: border-color .2s; }
+.faq details[open] { border-color: var(--accent); }
 .faq summary { cursor: pointer; font-weight: 600; font-size: 16px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: "+"; color: var(--accent); font-size: 22px; line-height: 1; }
-.faq details[open] summary::after { content: "−"; }
+.faq summary::after { content: "+"; color: var(--accent); font-size: 22px; line-height: 1; transition: transform .2s; }
+.faq details[open] summary::after { transform: rotate(45deg); }
 .faq p { color: var(--muted); margin: 10px 0 0; }
-
-/* Appel final */
-.final { position: relative; overflow: hidden; isolation: isolate; border-radius: 28px; padding: 48px 22px; text-align: center; color: #fff;
-  background: linear-gradient(180deg, var(--sky-1), var(--sky-2) 60%, var(--sky-3)); display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.final h2 { font-size: clamp(28px, 5vw, 44px); font-weight: 700; letter-spacing: -.025em; max-width: 18ch; }
-.final p { margin: 0; color: rgba(255, 255, 255, .88); }
-footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
 </style>
 </head>
-<body>
+<body class="site" data-page="accueil" data-sky>
 <div class="sky">
   <span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span><span class="cloud c4"></span>
   <div class="wrap">
-    <nav class="nav" aria-label="Navigation principale">
-      <a class="logo" href="index.html"><i aria-hidden="true"></i><span data-brand>ClipMoment</span></a>
-      <div class="links"><a href="#pourquoi">Fonctions</a><a href="#comment">Comment ça marche</a><a href="tarifs.html">Tarifs</a><a href="#faq">Questions</a></div>
-      <div class="right"><a class="login" href="app.html">Connexion</a><a class="btn white small" href="app.html">Commencer</a></div>
-    </nav>
-
     <div class="hero">
-      <span class="chip"><i aria-hidden="true"></i>Fonctionne depuis ton téléphone</span>
-      <h1>Tes vidéos longues, transformées en clips viraux</h1>
-      <p>Importe une interview, un podcast, un live ou un cours. L'IA écoute tout, trouve les passages qui accrochent et en fait des clips verticaux sous-titrés pour TikTok, Reels et Shorts.</p>
+      <span class="chip"><i aria-hidden="true"></i>Montage par IA, depuis ton téléphone</span>
+      <h1>Tes vidéos longues deviennent des clips <span class="rot" data-rotate="viraux|TikTok|Reels|Shorts">viraux</span></h1>
+      <p>Importe une interview, un podcast, un live ou un cours. L'IA écoute tout, garde les passages qui accrochent, enlève les silences et les « euh », et monte des clips verticaux sous-titrés.</p>
       <div class="row">
         <a class="btn white big" href="app.html" id="cta">Essayer gratuitement</a>
-        <a class="btn glass big" href="#comment">Voir comment ça marche</a>
+        <a class="btn glass big" href="#montage">Voir le montage IA</a>
       </div>
+      <div class="trust"><span id="trust-free">Minutes offertes à l'inscription</span><span>Sans carte bancaire</span><span>Orange Money et Wave</span></div>
 
       <div class="stage" aria-label="Exemple de clip vertical généré, avec sa note de potentiel viral et ses sous-titres">
-        <div class="float f-score" aria-hidden="true">
+        <div class="float f-score bob" aria-hidden="true">
           <div class="lb">Potentiel viral</div>
-          <div class="big">94/100</div>
+          <div class="big"><span data-count="94">94</span>/100</div>
           <div class="up">▲ meilleur passage</div>
         </div>
+        <div class="float f-plat bob" aria-hidden="true"><span style="background:#111">T</span><span style="background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF)">R</span><span style="background:#FF0033">S</span></div>
         <div class="phone" aria-hidden="true">
           <div class="screen">
-            <div class="stripes"></div>
             <div class="person"><i class="body"></i><i class="shirt"></i><i class="neck"></i><i class="head"></i><i class="hair"></i></div>
-            <!-- Vidéo libre de droits (Mixkit, licence gratuite, usage commercial autorisé, sans attribution).
-                 Pour ne plus dépendre de Mixkit, dépose le fichier dans web/assets/demo-clip.mp4 : il sera lu en premier. -->
+            <!-- Vidéo libre de droits (Mixkit, licence gratuite). Pour ne plus dépendre de Mixkit, dépose le fichier dans web/assets/demo-clip.mp4 : il sera lu en premier. -->
             <video class="demo-vid" id="demo-vid" autoplay muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1">
               <source src="assets/demo-clip.mp4" type="video/mp4">
               <source src="https://assets.mixkit.co/videos/2960/2960-720.mp4" type="video/mp4">
               <source src="https://assets.mixkit.co/videos/2960/2960-360.mp4" type="video/mp4">
             </video>
             <div class="shade"></div>
+            <span class="rec"><i></i>0:48</span>
             <span class="tv">TA CHAÎNE</span>
             <div class="quote"><span>« Personne ne t'explique ça,</span><span>c'est pour ça que tu</span><span>n'avances PAS ! »</span><small>Le conseil cash du coach</small></div>
-            <div class="cap">PERSONNE <b>NE</b> T'EXPLIQUE</div>
+            <div class="cap" data-karaoke="PERSONNE NE T'EXPLIQUE ÇA|C'EST POUR ÇA QUE|TU N'AVANCES PAS">PERSONNE <b>NE</b> T'EXPLIQUE</div>
           </div>
         </div>
-        <div class="float f-swap" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3v13M6 16l-3-3M6 16l3-3M14 17V4M14 4l-3 3M14 4l3 3"/></svg></div>
-        <div class="float f-caps" aria-hidden="true">
+        <div class="float f-caps bob" aria-hidden="true">
           <div class="lb">Sous-titres mot par mot</div>
           <div class="w"><span>PERSONNE</span><span class="on">NE</span><span>T'EXPLIQUE</span><span>ÇA</span></div>
         </div>
-        <div class="rating" id="rating">
-          <div class="gift" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="8" width="14" height="9" rx="1.5"/><path d="M2.5 5.5h15v3h-15zM10 5.5V17M10 5.5C8.5 2.5 5.5 3 6.5 5.5M10 5.5c1.5-3 4.5-2.5 3.5 0"/></svg></div>
-          <b id="rating-n">30 min</b><span>offertes à l'inscription</span>
+        <div class="float f-cut bob" aria-hidden="true">
+          <div class="lb">Hésitations supprimées</div>
+          <div class="w"><span>Alors</span><s>euh</s><span>le</span><s>hum</s><span>secret</span></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<main class="wrap">
-  <div class="platforms center">
-    <span class="lb">Des clips prêts à publier sur</span>
-    <div class="plist"><span><i aria-hidden="true"></i>TikTok</span><span><i aria-hidden="true"></i>Instagram Reels</span><span><i aria-hidden="true"></i>YouTube Shorts</span><span><i aria-hidden="true"></i>Facebook</span><span><i aria-hidden="true"></i>Snapchat</span></div>
+<main>
+  <div class="platforms">
+    <span class="lb wrap">Pour tous ceux qui parlent face caméra</span>
+    <div class="marquee" aria-label="Types de vidéos acceptées">
+      <div class="track">
+        <span><i>🎙️</i>Podcasts</span><span><i>⛪</i>Prédications</span><span><i>🎤</i>Interviews</span><span><i>📺</i>Émissions TV</span><span><i>🔴</i>Lives Facebook</span><span><i>🎓</i>Cours</span><span><i>💪</i>Coaching</span><span><i>🗣️</i>Débats</span><span><i>🏟️</i>Conférences</span><span><i>💼</i>Webinaires</span>
+        <span aria-hidden="true"><i>🎙️</i>Podcasts</span><span aria-hidden="true"><i>⛪</i>Prédications</span><span aria-hidden="true"><i>🎤</i>Interviews</span><span aria-hidden="true"><i>📺</i>Émissions TV</span><span aria-hidden="true"><i>🔴</i>Lives Facebook</span><span aria-hidden="true"><i>🎓</i>Cours</span><span aria-hidden="true"><i>💪</i>Coaching</span><span aria-hidden="true"><i>🗣️</i>Débats</span><span aria-hidden="true"><i>🏟️</i>Conférences</span><span aria-hidden="true"><i>💼</i>Webinaires</span>
+      </div>
+    </div>
   </div>
 
+  <div class="wrap">
+  <section class="s center" id="montage">
+    <div class="sh rv"><span class="eyebrow">Le montage IA</span><h2>Pas un simple découpage :<br><span class="grad">un vrai montage</span></h2>
+      <p>L'IA ne coupe pas bêtement 60 secondes. Elle choisit l'accroche, l'explication et la chute, enlève ce qui ne sert à rien et raccorde le tout.</p></div>
+    <div class="montage rv" style="margin-top:40px" aria-label="Animation : une vidéo de 12 minutes devient un clip de 48 secondes">
+      <div class="mt-stage">
+        <div class="mt-head"><span>interview-complète.mp4</span><span>Durée <b data-dur>12:34</b></span></div>
+        <div class="mt-track" aria-hidden="true">
+          <i class="x" style="--w:9;--a:.6"></i><i class="k" style="--w:6;--a:.95"></i><i class="sil" style="--w:2"></i><i class="k" style="--w:3;--a:.8"></i>
+          <i class="x" style="--w:12;--a:.5"></i><i class="um" style="--w:2.4"></i><i class="k" style="--w:7;--a:.85"></i><i class="sil" style="--w:3"></i>
+          <i class="x" style="--w:10;--a:.55"></i><i class="um" style="--w:2.4"></i><i class="k" style="--w:5;--a:1"></i><i class="x" style="--w:8;--a:.6"></i>
+        </div>
+        <div class="mt-labels" aria-hidden="true"><span>1 · Accroche</span><span style="--d:.1s">2 · Explication</span><span style="--d:.2s">3 · Chute</span><span style="--d:.3s">Sous-titres ajoutés</span></div>
+      </div>
+      <ol class="mt-steps">
+        <li><div><b>Ta vidéo complète</b><span>Interview, podcast ou live, jusqu'à 30 min.</span></div></li>
+        <li><div><b>L'IA choisit les meilleurs passages</b><span>Ceux qui accrochent et racontent quelque chose.</span></div></li>
+        <li><div><b>Silences et « euh » enlevés</b><span>Au mot près, sans couper les phrases.</span></div></li>
+        <li><div><b>Hors-sujet écarté</b><span>Digressions et répétitions disparaissent.</span></div></li>
+        <li><div><b>Clip raccordé, prêt à poster</b><span>Titre, sous-titres et note de potentiel viral.</span></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="center" style="padding-block:10px 40px">
+    <div class="stats">
+      <div class="stat rv"><b><span data-count="12">12</span></b><span>clips proposés pour une vidéo de 30 min</span></div>
+      <div class="stat rv" style="--d:.08s"><b>≈ <span data-count="3">3</span> min</b><span>pour analyser 30 min de vidéo</span></div>
+      <div class="stat rv" style="--d:.16s"><b><span data-count="100" data-suffix=" %">100 %</span></b><span>depuis ton téléphone, sans logiciel</span></div>
+      <div class="stat rv" style="--d:.24s"><b><span data-count="3">3</span></b><span>gabarits : Citation, Sous-titres animés, Sobre</span></div>
+    </div>
+  </section>
+
   <section class="s center" id="pourquoi">
-    <div class="sh"><span class="eyebrow">Pourquoi ClipMoment</span><h2>Une vidéo longue,<br>dix clips prêts à poster</h2>
+    <div class="sh rv"><span class="eyebrow">Pourquoi ClipMoment</span><h2>Une vidéo longue,<br>dix clips prêts à poster</h2>
       <p>Ce qui prenait une soirée de montage se fait maintenant en quelques minutes, depuis ton téléphone.</p></div>
     <div class="folders">
-      <article class="folder">
+      <article class="folder rv">
         <div class="ui" aria-hidden="true">
           <span class="lb">Nouvelle vidéo</span>
           <div class="inp">🎬 <b>interview-podcast.mp4</b></div>
-          <div class="inp">Langue <b style="margin-left:auto">Français</b></div>
+          <div class="inp">🔗 <b>youtube.com/watch?v=…</b></div>
           <div class="bar-p"><i></i></div>
           <span class="mini">Transcription mot par mot…</span>
         </div>
-        <div><h3>Importe, l'IA s'occupe du reste</h3><p>Elle transcrit chaque mot et lit tout le contenu pour trouver ce qui accroche.</p></div>
+        <div><h3>Un fichier ou un lien</h3><p>Importe depuis ta galerie ou colle un lien YouTube, Facebook, TikTok ou Instagram.</p></div>
       </article>
-      <article class="folder">
+      <article class="folder rv" style="--d:.1s">
         <div class="ui" aria-hidden="true">
           <span class="lb">Moments trouvés</span>
           <div class="wrow"><span class="t">04:12</span>« C'est la TRAHISON ! »<span class="sc">94</span></div>
@@ -269,72 +269,91 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
         </div>
         <div><h3>Les meilleurs passages, notés</h3><p>Chaque clip reçoit une note de potentiel viral et un titre-citation prêt à l'emploi.</p></div>
       </article>
-      <article class="folder">
+      <article class="folder rv" style="--d:.2s">
         <div class="ui" aria-hidden="true">
           <span class="lb">Pack le plus choisi</span>
-          <div class="price" id="fold-price">7 500 F</div>
+          <div class="price" id="fold-price">7 500 F / mois</div>
           <span class="mini" id="fold-mins">100 minutes de vidéo par mois</span>
           <div class="pay"><span>Orange Money</span><span>Wave</span></div>
         </div>
-        <div><h3>Un prix pensé pour l'Afrique</h3><p>Tu paies seulement les minutes analysées, en mobile money. Montage et exports illimités.</p></div>
+        <div><h3>Un prix pensé pour l'Afrique</h3><p>Paiement en mobile money, sans engagement. Montage et exports illimités.</p></div>
       </article>
     </div>
   </section>
 
   <section class="s center" id="comment">
-    <div class="sh"><span class="eyebrow">Comment ça marche</span><h2>Trois étapes, sans ordinateur</h2></div>
-    <div class="steps3">
-      <div class="step"><span class="n">1</span><h3>Importe ta vidéo</h3><p>Choisis une vidéo longue dans ta galerie, jusqu'à 30 minutes par analyse.</p></div>
-      <div class="step"><span class="n">2</span><h3>Choisis tes clips</h3><p>L'IA propose les meilleurs passages, classés et déjà titrés. Tu gardes ceux qui te plaisent.</p></div>
-      <div class="step"><span class="n">3</span><h3>Retouche et publie</h3><p>Gabarit, sous-titres, logo, cadrage : ajuste en quelques touches, exporte en 9:16 et partage.</p></div>
+    <div class="sh rv"><span class="eyebrow">Comment ça marche</span><h2>Trois étapes, sans ordinateur</h2></div>
+    <div class="steps">
+      <div class="step rv"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13V3M6 7l4-4 4 4M3 13v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/></svg></span><h3>Importe ta vidéo</h3><p>Depuis ta galerie ou par lien, jusqu'à 30 minutes par analyse.</p></div>
+      <div class="step rv" style="--d:.1s"><span class="ic"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2l1.6 4.4L16 8l-4.4 1.6L10 14l-1.6-4.4L4 8l4.4-1.6zM15.5 12l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span><h3>L'IA monte tes clips</h3><p>Meilleurs passages raccordés, silences enlevés, titres et sous-titres déjà prêts.</p></div>
+      <div class="step rv" style="--d:.2s"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10l4 4 8-9"/></svg></span><h3>Retouche et publie</h3><p>Gabarit, logo, cadrage : ajuste en quelques touches, exporte en 9:16 et partage.</p></div>
     </div>
   </section>
 
   <section class="s center">
-    <div class="sh"><span class="eyebrow">Fonctions</span><h2>Tout pour publier vite et bien</h2></div>
-    <div class="feats">
-      <div class="feat"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="11" height="3" rx="1"/><rect x="3" y="15" width="7" height="2.5" rx="1"/><path d="M5 4h10M5 7h7"/></svg></span><div><h3>Gabarit Citation</h3><p>La phrase choc entre guillemets dans des bandes blanches, comme les chaînes télé.</p></div></div>
-      <div class="feat"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 14h4M9 14h8M3 10h9M14 10h3"/></svg></span><div><h3>Sous-titres animés</h3><p>Mot par mot, le mot prononcé ressort en couleur. Corrigeables à la main.</p></div></div>
-      <div class="feat"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2.5" width="8" height="15" rx="2"/><circle cx="10" cy="8" r="2.2"/></svg></span><div><h3>Cadrage sur le visage</h3><p>La vidéo horizontale passe en vertical en suivant la personne qui parle.</p></div></div>
-      <div class="feat"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 15l4-5 3 3 4-6 3 4"/></svg></span><div><h3>Note de potentiel viral</h3><p>Chaque clip est classé, avec la raison pour laquelle il peut marcher.</p></div></div>
-      <div class="feat"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3l2 4.5 5 .5-3.8 3.3 1.2 4.9L10 13.6 5.6 16.2l1.2-4.9L3 8l5-.5z"/></svg></span><div><h3>Ta marque partout</h3><p>Ton logo, ta couleur et ta signature sur tous tes clips.</p></div></div>
-      <div class="feat"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="7"/><path d="M3 10h14M10 3c2 2.2 2.8 4.5 2.8 7s-.8 4.8-2.8 7c-2-2.2-2.8-4.5-2.8-7S8 5.2 10 3z"/></svg></span><div><h3>Plusieurs langues</h3><p>Français, anglais, arabe, espagnol, portugais et la plupart des grandes langues.</p></div></div>
+    <div class="sh rv"><span class="eyebrow">Gabarits</span><h2>Le style des grandes chaînes,<br>en un geste</h2>
+      <p>Choisis un gabarit, ajoute ton logo et ta couleur : tous tes clips ont la même identité.</p></div>
+    <div class="tpls">
+      <div class="tpl rv"><div class="pm" aria-hidden="true"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="tv">TA CHAÎNE</span>
+        <div class="qt"><span>« On m'a dit non</span><span>30 fois avant</span><span>le premier oui »</span><small>Épisode 12 · Entreprendre</small></div></div>
+        <span class="nm">Citation<span>Bandes blanches façon télé</span></span></div>
+      <div class="tpl rv" style="--d:.1s"><div class="pm" aria-hidden="true" style="--pm1:#2E4B6B;--pm2:#14202F;--pmt:#E2574C"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="logo-b"></span>
+        <div class="hook"><span>LA RÈGLE DES 30 JOURS</span></div><div class="cap" data-karaoke="FAIS DIX POMPES|CHAQUE MATIN|PENDANT UN MOIS">FAIS <b>DIX</b> POMPES</div></div>
+        <span class="nm">Sous-titres animés<span>Mot par mot, très dynamique</span></span></div>
+      <div class="tpl rv" style="--d:.2s"><div class="pm" aria-hidden="true" style="--pm1:#5B5A3E;--pm2:#23231A;--pmt:#3D6B8F"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div>
+        <div class="sob">Une fraction, c'est juste un partage équitable.</div></div>
+        <span class="nm">Sobre<span>Discret, pour les cours</span></span></div>
     </div>
+    <a class="link-arrow rv" href="fonctionnalites.html" style="margin-top:30px">Voir toutes les fonctionnalités →</a>
+  </section>
+
+  <section class="s center">
+    <div class="sh rv"><span class="eyebrow">Pour qui ?</span><h2>Pensé pour ceux qui parlent</h2>
+      <p>Si quelqu'un parle dans ta vidéo, l'IA sait en tirer des clips.</p></div>
+    <div class="uses">
+      <a class="use rv" href="exemples.html#podcasts" style="--g:linear-gradient(135deg,#1A6FE0,#36B4FF)"><span class="em" aria-hidden="true">🎙️</span><h3>Podcasts et émissions</h3><p>Les phrases fortes de chaque épisode.</p></a>
+      <a class="use rv" href="exemples.html#eglises" style="--g:linear-gradient(135deg,#6C3FD1,#B07CFF);--d:.08s"><span class="em" aria-hidden="true">⛪</span><h3>Églises et mosquées</h3><p>Les messages qui touchent, chaque semaine.</p></a>
+      <a class="use rv" href="exemples.html#coachs" style="--g:linear-gradient(135deg,#E2574C,#FF9A5A);--d:.16s"><span class="em" aria-hidden="true">💪</span><h3>Coachs et formateurs</h3><p>Un conseil par clip, prêt à publier.</p></a>
+      <a class="use rv" href="exemples.html#medias" style="--g:linear-gradient(135deg,#0E8A6A,#3FD1A0);--d:.24s"><span class="em" aria-hidden="true">📺</span><h3>Médias et journalistes</h3><p>Les déclarations clés de tes interviews.</p></a>
+    </div>
+    <a class="link-arrow rv" href="exemples.html" style="margin-top:30px">Voir tous les exemples →</a>
   </section>
 
   <section class="s center" id="tarifs">
-    <div class="sh"><span class="eyebrow">Tarifs</span><h2>Paie seulement ce que tu analyses</h2>
-      <p id="price-sub">1 crédit = 1 minute de vidéo analysée. Le montage et les exports sont illimités. Tes premières minutes sont offertes.</p></div>
+    <div class="sh rv"><span class="eyebrow">Tarifs</span><h2>Petit prix, des dizaines de clips</h2>
+      <p id="price-sub">1 crédit = 1 minute de vidéo analysée. Montage et exports illimités, sans engagement.</p></div>
     <div class="price-grid" id="price"></div>
-    <p class="note" style="margin-top:16px">Paiement par Orange Money ou Wave. Tes crédits sont ajoutés à ton compte après réception. <a href="tarifs.html">Voir le détail des packs</a></p>
+    <a class="link-arrow" href="tarifs.html" style="margin-top:22px">Comparer les packs en détail →</a>
   </section>
 
   <section class="s center" id="faq">
-    <div class="sh"><span class="eyebrow">Questions</span><h2>Questions fréquentes</h2></div>
+    <div class="sh rv"><span class="eyebrow">Questions</span><h2>Questions fréquentes</h2></div>
     <div class="faq">
       <details><summary>Quelles vidéos marchent le mieux ?</summary><p>Celles où quelqu'un parle : interviews, podcasts, débats, lives, cours, prédications, conférences. L'IA choisit les passages d'après ce qui est dit.</p></details>
-      <details><summary>Ma vidéo est-elle envoyée sur internet ?</summary><p>Seul l'audio est envoyé, pour la transcription. La vidéo reste sur ton appareil : le découpage, les sous-titres et l'export se font dans ton navigateur.</p></details>
+      <details><summary>C'est vraiment un montage, pas juste une coupe ?</summary><p>Oui. L'IA peut raccorder plusieurs passages éloignés (une accroche, une explication, une chute), elle enlève les silences et les hésitations, et écarte les digressions. Tu peux remettre ou retirer chaque passage dans l'éditeur.</p></details>
+      <details><summary>Ma vidéo est-elle envoyée sur internet ?</summary><p>Seul l'audio est envoyé, pour la transcription. La vidéo reste sur ton appareil : le montage, les sous-titres et l'export se font dans ton navigateur.</p></details>
       <details><summary>Combien de temps ça prend ?</summary><p>L'analyse d'une vidéo de 30 minutes prend en général 2 à 5 minutes. L'export d'un clip prend à peu près sa durée : 40 secondes pour un clip de 40 secondes.</p></details>
       <details><summary>Je peux coller un lien YouTube ?</summary><p>Oui : colle un lien YouTube, Facebook, Instagram, TikTok ou X dans le studio. L'import coûte quelques crédits en plus, rendus si l'import échoue. N'importe que des vidéos que tu as le droit de réutiliser.</p></details>
-      <details><summary>Mes crédits expirent-ils ?</summary><p>Non. Les minutes que tu n'utilises pas restent sur ton compte et s'ajoutent à celles du mois suivant. Sans engagement : tu renouvelles seulement quand tu veux.</p></details>
+      <details><summary>Mes minutes expirent-elles ?</summary><p>Non. Les minutes que tu n'utilises pas restent sur ton compte et s'ajoutent à celles du mois suivant. Sans engagement : tu renouvelles seulement quand tu veux.</p></details>
     </div>
   </section>
 
   <section class="s">
-    <div class="final">
+    <div class="final rv">
       <span class="cloud c1" style="top:10%"></span><span class="cloud c2" style="top:50%"></span>
       <h2>Ton prochain clip viral est déjà dans tes vidéos</h2>
-      <p>Crée ton compte et analyse ta première vidéo gratuitement.</p>
+      <p id="final-sub">Crée ton compte et analyse ta première vidéo gratuitement.</p>
       <a class="btn white big" href="app.html">Créer mon compte gratuit</a>
     </div>
   </section>
+  </div>
 </main>
-<footer class="wrap"><span>© <span id="year"></span> <span data-brand>ClipMoment</span></span><span>Clips verticaux pour TikTok, Reels et Shorts</span></footer>
 
 <script src="assets/config.js"></script>
 <script src="assets/mock.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 <script src="assets/core.js"></script>
+<script src="assets/site.js"></script>
 <script>
 (function () {
   const v = document.getElementById('demo-vid');
@@ -345,18 +364,19 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
   else { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
 })();
 (async function () {
-  document.querySelectorAll('[data-brand]').forEach((n) => { n.textContent = CM.brand; });
-  document.getElementById('year').textContent = new Date().getFullYear();
   const s = await CM.loadSettings();
   const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }];
+  const NAMES = ['Découverte', 'Créateur', 'Pro'];
   const top = packs.length > 1 ? 1 : 0;
   const box = document.getElementById('price');
   packs.forEach((p, i) => {
-    box.appendChild(CM.el('div', { class: 'plan' + (i === top ? ' top' : '') }, [
+    const amt = CM.el('b', { text: p.price });
+    if (p.period) amt.appendChild(CM.el('small', { text: ' / ' + p.period }));
+    box.appendChild(CM.el('div', { class: 'plan rv in' + (i === top ? ' top' : '') }, [
       CM.el('span', { class: 'tag', text: i === top ? 'Le plus choisi' : 'Pack' }),
-      CM.el('b', { text: p.credits + ' min' }),
-      CM.el('span', { class: 'sub', text: p.period ? 'de vidéo par ' + p.period : 'de vidéo à analyser' }),
-      CM.el('span', { class: 'amt', text: p.price + (p.period ? ' / ' + p.period : '') }),
+      CM.el('span', { class: 'nm', text: p.name || NAMES[i] || 'Pack' }),
+      amt,
+      CM.el('span', { class: 'sub', text: p.credits + ' minutes de vidéo ' + (p.period ? 'par ' + p.period : 'à analyser') }),
       CM.el('a', { class: 'btn' + (i === top ? '' : ' primary'), href: 'tarifs.html#pack-' + i, text: 'Choisir ce pack' }),
     ]));
   });
@@ -365,10 +385,9 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
   document.getElementById('fold-mins').textContent = tp.credits + ' minutes de vidéo ' + (tp.period ? 'par ' + tp.period : 'à analyser');
   const w = Number(s.welcome_credits) || 0;
   if (w) {
-    document.getElementById('cta').textContent = 'Essayer gratuitement';
-    document.getElementById('rating-n').textContent = w + ' min';
-    document.getElementById('price-sub').textContent = '1 crédit = 1 minute de vidéo analysée. Le montage et les exports sont illimités. ' + w + ' minutes offertes à l\'inscription.';
-  } else document.getElementById('rating').hidden = true;
+    document.getElementById('trust-free').textContent = w + ' minutes offertes';
+    document.getElementById('final-sub').textContent = 'Crée ton compte : tes ' + w + ' premières minutes sont offertes.';
+  } else document.getElementById('trust-free').remove();
 })();
 </script>
 </body>

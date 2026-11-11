@@ -10,12 +10,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/site.css">
 <style>
 /* Mise en page : en-tête centré, trois cartes (celle du milieu mise en avant), notes de paiement dessous. */
 main { padding-block: 40px 70px; overflow-x: clip; }
-.bar .btn { white-space: nowrap; }
-@media (max-width: 420px) { #nav-home { display: none; } }
-@media (max-width: 340px) { .bar .logo span { display: none; } }
 .head { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px; position: relative; isolation: isolate; }
 .head::before { content: ""; position: absolute; z-index: -1; width: min(760px, 120%); aspect-ratio: 1; top: -40%; left: 50%; transform: translateX(-50%); border-radius: 50%;
   border: 1px solid var(--line); opacity: .7; }
@@ -80,15 +78,7 @@ main { padding-block: 40px 70px; overflow-x: clip; }
 .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14.5px; }
 </style>
 </head>
-<body>
-<header class="bar">
-  <div class="wrap">
-    <a class="logo" href="index.html"><i aria-hidden="true"></i><span data-brand>ClipMoment</span></a>
-    <span class="spacer"></span>
-    <a class="btn ghost small" href="index.html" id="nav-home">Accueil</a>
-    <a class="btn small" href="app.html" id="nav-app">Se connecter</a>
-  </div>
-</header>
+<body class="site" data-page="tarifs">
 
 <main class="wrap">
   <div class="head">
@@ -132,6 +122,7 @@ main { padding-block: 40px 70px; overflow-x: clip; }
 <script src="assets/mock.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 <script src="assets/core.js"></script>
+<script src="assets/site.js"></script>
 <script>
 (async function () {
   'use strict';
@@ -151,7 +142,7 @@ main { padding-block: 40px 70px; overflow-x: clip; }
   const money = (n) => n.toLocaleString('fr-FR').replace(/ | /g, ' ') + ' F';
 
   const [s, session] = await Promise.all([CM.loadSettings(), CM.auth.session().catch(() => null)]);
-  if (session) $('#nav-app').textContent = 'Mon studio';
+  if (session) document.querySelectorAll('.site-h .login').forEach((a) => { a.textContent = 'Mon studio'; });
   const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }];
   const top = packs.length >= 3 ? 1 : packs.length - 1;
   const fee = s.link_fee != null ? Number(s.link_fee) : 5;

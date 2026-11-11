@@ -144,7 +144,9 @@ supabase/migration_v2_logo_liens.sql   logo enregistré dans le compte + import 
 supabase/functions/clipmoment-api      l'API déployée sur Supabase (copie de worker/worker.js)
 worker/worker.js      API (Cloudflare Worker, un seul fichier)
 web/                  site statique (Cloudflare Pages)
-  index.html          page de vente
+  index.html          page de vente (accueil animé)
+  fonctionnalites.html, exemples.html, tarifs.html, contact.html   pages du menu
+  assets/site.css, assets/site.js   en-tête, menu mobile, pied de page et animations communs aux pages publiques
   app.html            studio : import, analyse, clips, éditeur, export
   admin.html          administration
   assets/config.js    tes réglages (à remplir)
