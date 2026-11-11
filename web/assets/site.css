@@ -159,6 +159,17 @@ section.s { padding-block: 64px; }
 .pm .cap b { color: var(--hl, #FFE600); display: inline-block; animation: pop 1.6s infinite; }
 .pm .sob { position: absolute; left: 8%; right: 8%; bottom: 9%; text-align: center; color: #fff; font: 600 12px/1.35 var(--body); text-shadow: 0 1px 6px rgba(0, 0, 0, .7); z-index: 2; }
 .pm .logo-b { position: absolute; top: 6%; left: 7%; width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, #4A9BEF, #1B74E8); z-index: 2; opacity: .95; }
+/* Téléphone avec une vraie vidéo */
+.pm.vid { background: #000; }
+.pm.vid::after { display: none; }
+.pm.vid video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.snd { position: absolute; z-index: 4; right: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 50%; border: 0; cursor: pointer; padding: 0;
+  background: rgba(0, 0, 0, .55) no-repeat center / 17px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8v4h3l4 3V5L6 8z' fill='white'/%3E%3Cpath d='M13.5 8l4 4M17.5 8l-4 4'/%3E%3C/svg%3E"); }
+.snd[aria-pressed="true"] { background-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8v4h3l4 3V5L6 8z' fill='white'/%3E%3Cpath d='M13 7.5a3.5 3.5 0 0 1 0 5M15.5 5.5a6.5 6.5 0 0 1 0 9'/%3E%3C/svg%3E"); }
+.screen .snd { bottom: 18px; right: 14px; }
+
 /* Gabarit Mots-clés : petit italique + gros mot en couleur */
 .pm .kw { position: absolute; left: 6%; right: 6%; top: 64%; text-align: center; z-index: 2; }
 .pm .kw i { display: block; font: italic 500 13px/1.25 "Playfair Display", Georgia, serif; color: #fff; text-shadow: 0 1px 8px rgba(0, 0, 0, .7); }

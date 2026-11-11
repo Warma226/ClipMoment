@@ -95,6 +95,27 @@
     setInterval(() => { p = (p + 1) % 5; show(); }, 2300);
   }
 
+  /* Vidéos dans les téléphones : chargées et lues seulement quand elles sont à l'écran ; bouton son (une seule vidéo sonore à la fois) */
+  const vids = Array.from(document.querySelectorAll('video[data-src], .screen video'));
+  const play = (v) => { if (reduce && v.muted) return; const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+  if (vids.length && 'IntersectionObserver' in window) {
+    const vo = new IntersectionObserver((es) => es.forEach((e) => {
+      const v = e.target;
+      if (e.isIntersecting) { if (v.dataset.src && !v.getAttribute('src')) { v.src = v.dataset.src; v.preload = 'auto'; } play(v); }
+      else v.pause();
+    }), { threshold: 0.25 });
+    vids.forEach((v) => vo.observe(v));
+  }
+  document.querySelectorAll('.snd').forEach((b) => b.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const v = b.parentElement.querySelector('video'); if (!v) return;
+    const on = v.muted;
+    vids.forEach((x) => { if (x !== v) x.muted = true; });
+    document.querySelectorAll('.snd').forEach((x) => { x.setAttribute('aria-pressed', 'false'); x.setAttribute('aria-label', 'Activer le son'); });
+    v.muted = !on;
+    if (on) { if (v.dataset.src && !v.getAttribute('src')) v.src = v.dataset.src; play(v); b.setAttribute('aria-pressed', 'true'); b.setAttribute('aria-label', 'Couper le son'); }
+  }));
+
   /* Sous-titres mot par mot sur un téléphone : <div class="cap" data-karaoke="phrase|phrase"> */
   document.querySelectorAll('[data-karaoke]').forEach((cap) => {
     const lines = cap.dataset.karaoke.split('|').map((l) => l.trim().split(/\s+/));
