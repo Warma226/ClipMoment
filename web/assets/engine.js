@@ -123,9 +123,11 @@
 
   /* ---------- Choix des moments ---------- */
 
-  const LENGTHS = { auto: [20, 60], court: [15, 30], moyen: [30, 60], long: [60, 90] };
+  // Durée finale des clips, une fois les silences et les « euh » retirés.
+  const LENGTHS = { auto: [45, 90], moyen: [45, 60], long: [60, 90] };
 
-  function autoCount(duration) { return clamp(Math.round(duration / 150), 3, 12); }
+  // Un clip de 45 s à 1 min 30 pour environ 3 minutes de vidéo.
+  function autoCount(duration) { return clamp(Math.round(duration / 180), 1, 10); }
 
   // Découpe la transcription en fenêtres d'environ 7 min pour rester sous les quotas gratuits de l'IA.
   function windows(segments) {
@@ -141,9 +143,11 @@
   function overlap(a, b) { return a.start < b.end && b.start < a.end; }
 
   async function aiMoments(projectId, tr, opts, onProgress, signal) {
-    const [min, max] = LENGTHS[opts.length] || LENGTHS.auto;
+    const [lo, hi] = LENGTHS[opts.length] || LENGTHS.auto;
+    // L'IA mesure la durée avant le retrait des silences : on lui demande un peu plus long.
+    const min = lo + 5, max = hi + 8;
     const wins = windows(tr.segments);
-    const per = clamp(Math.ceil((opts.count * 1.6) / Math.max(1, wins.length)), 2, 6);
+    const per = clamp(Math.ceil((opts.count * 1.5) / Math.max(1, wins.length)), 1, 4);
     let all = [], failures = 0;
     for (let i = 0; i < wins.length; i++) {
       if (signal && signal.aborted) throw new DOMException('Annulé', 'AbortError');
@@ -182,6 +186,109 @@
     }
     return chosen.map((c) => { const st = c.s * HOP, en = Math.min(duration, c.e * HOP); return { start: st, end: en, segments: [[st, en]], score: Math.round(clamp(c.v * 100, 1, 99)),
       title: '', context: '', hook: '', reason: 'Passage choisi d\'après l\'intensité du son.' }; });
+  }
+
+  /* ---------- Finition : clips complets, de la bonne durée, qui finissent sur une fin de phrase ---------- */
+
+  const END_PUNCT = /[.!?…]["»”']?$/;
+  // Instants où une phrase se termine : ponctuation finale (mots ou segments de la transcription) ou vraie pause.
+  function sentenceEnds(tr) {
+    const words = tr.words || [], ends = [];
+    (tr.segments || []).forEach((g) => { if (END_PUNCT.test(String(g[2] || '').trim())) ends.push(+g[1]); });
+    words.forEach((w, i) => {
+      if (END_PUNCT.test(String(w[0]).trim())) ends.push(+w[2]);
+      if (i + 1 < words.length && words[i + 1][1] - w[2] >= 0.9) ends.push(+w[2]);
+    });
+    if (words.length) ends.push(+words[words.length - 1][2]);
+    // On recale chaque fin sur la fin du mot le plus proche.
+    const snapped = ends.map((t) => { let best = t, d = 1e9; for (const w of words) { const x = Math.abs(w[2] - t); if (x < d) { d = x; best = w[2]; } if (w[1] > t + 1) break; } return d <= 0.6 ? best : t; });
+    return Array.from(new Set(snapped.map((t) => +t.toFixed(2)))).sort((a, b) => a - b);
+  }
+  const editedLen = (segs, words) => piecesDuration(computePieces(segs.map(([a, b]) => ({ s: a, e: b, on: true })), words, { cutSilence: true, cutFillers: true }));
+  const hits = (a, b, taken) => taken.some(([x, y]) => a < y - 0.05 && b > x + 0.05);
+
+  function finishClip(clip, tr, range, duration, taken) {
+    const words = tr.words || [], ends = clip._ends;
+    const [min, max] = range;
+    let segs = (Array.isArray(clip.segments) && clip.segments.length ? clip.segments : [[clip.start, clip.end]])
+      .map(([a, b]) => [Math.max(0, +a), Math.min(duration, +b)]).filter(([a, b]) => b - a >= 0.5);
+    if (!segs.length) return null;
+    const last = () => segs[segs.length - 1], first = () => segs[0];
+    const nextEnd = (t) => ends.find((e) => e > t + 0.25);
+    const prevEnd = (t) => { let r = null; for (const e of ends) { if (e < t - 0.25) r = e; else break; } return r; };
+    const startAfter = (t) => { const w = words.find((x) => x[1] >= t - 0.01); return w ? w[1] : t; };
+
+    // 1 et 2. Chaque morceau commence au début d'une phrase et finit à la fin d'une phrase
+    // (raccord propre entre les morceaux, et dernière phrase jamais coupée).
+    segs.forEach((g, i) => {
+      const lo = i > 0 ? segs[i - 1][1] : -1, hi = i + 1 < segs.length ? segs[i + 1][0] : duration + 1;
+      const isLast = i === segs.length - 1;
+      if (!ends.some((e) => Math.abs(e - g[1]) <= 0.35)) {
+        const before = ends.filter((e) => e <= g[1]).pop();
+        const silentTail = before != null && before > g[0] + 1 && !words.some((w) => w[1] > before && w[1] < g[1]);
+        const e = nextEnd(g[1] - 0.3);
+        if (silentTail) g[1] = before; // après la phrase il n'y a que du silence : on s'arrête sur elle
+        else if (e != null && e - g[1] <= (isLast ? 12 : 8) && e < hi - 0.1 && !hits(g[1], e, taken)) g[1] = e;
+        else if (!isLast && before != null && before > g[0] + 1.5) g[1] = before; // sinon on recule à la phrase précédente
+      }
+      const p = prevEnd(g[0] + 0.3);
+      if (p != null) { const st = startAfter(p); if (st < g[0] && g[0] - st <= 4 && st > lo + 0.05 && !hits(st, g[0], taken)) g[0] = st; }
+    });
+    segs = segs.filter(([a, b]) => b - a >= 0.8);
+    if (!segs.length) return null;
+
+    // 3. Trop court : on ajoute des phrases entières à la fin, puis au début.
+    let len = editedLen(segs, words), guard = 0;
+    while (len < min && guard++ < 40) {
+      const e = nextEnd(last()[1]);
+      if (e == null || e > duration + 0.01 || hits(last()[1], e, taken) || (len + (e - last()[1]) > max + 12)) break;
+      last()[1] = e; len = editedLen(segs, words);
+    }
+    guard = 0;
+    while (len < min && guard++ < 40) {
+      // La phrase précédente commence juste après la fin de l'avant-dernière.
+      const pe = prevEnd(first()[0]), pe2 = pe == null ? null : prevEnd(pe);
+      const st = pe == null ? first()[0] : pe2 == null ? (words.length ? words[0][1] : 0) : startAfter(pe2);
+      if (st >= first()[0] - 0.2 || hits(st, first()[0], taken)) break;
+      first()[0] = st; len = editedLen(segs, words);
+    }
+    // 4. Trop long : on raccourcit la fin, toujours sur une fin de phrase.
+    guard = 0;
+    while (len > max + 3 && guard++ < 40) {
+      const cands = ends.filter((e) => e < last()[1] - 0.25 && e > last()[0] + 2);
+      if (!cands.length) {
+        if (segs.length > 1) { segs.pop(); len = editedLen(segs, words); continue; }
+        break;
+      }
+      last()[1] = cands[cands.length - 1]; len = editedLen(segs, words);
+    }
+    clip.segments = segs.map(([a, b]) => [+a.toFixed(2), +b.toFixed(2)]);
+    clip.start = clip.segments[0][0]; clip.end = Math.max(...clip.segments.map((g) => g[1]));
+    clip._len = len;
+    return clip;
+  }
+
+  // Finit tous les clips (le meilleur score d'abord) sans qu'ils se marchent dessus. Garde ceux d'au moins 30 s si possible.
+  function finishClips(clips, tr, length, duration) {
+    const range = LENGTHS[length] || LENGTHS.auto;
+    const ends = sentenceEnds(tr);
+    const taken = [], out = [];
+    if (duration <= range[0] + 5) {
+      const c = Object.assign({}, clips[0] || { score: 50, title: '', context: '', hook: '', reason: 'Vidéo entière.' });
+      c.segments = [[0, duration]]; c.start = 0; c.end = duration; return [c];
+    }
+    clips.slice().sort((a, b) => (b.score || 0) - (a.score || 0)).forEach((c0) => {
+      const c = Object.assign({}, c0, { _ends: ends });
+      const segs = (c.segments && c.segments.length ? c.segments : [[c.start, c.end]]);
+      if (segs.some(([a, b]) => hits(a, b, taken))) return;
+      const f = finishClip(c, tr, range, duration, taken);
+      delete c._ends;
+      if (!f) return;
+      f.segments.forEach((g) => taken.push(g));
+      out.push(f);
+    });
+    const good = out.filter((c) => c._len >= Math.min(30, range[0]));
+    return (good.length ? good : out).map((c) => { delete c._len; return c; });
   }
 
   // Cale le début et la fin d'un clip sur des mots entiers, avec une petite marge.
@@ -233,5 +340,5 @@
   }
   const piecesDuration = (P) => P.reduce((s, q) => s + (q[1] - q[0]), 0);
 
-  window.CMEngine = { HOP, SR, decodeMono, energy, chunkBounds, wavBlob, transcribe, aiMoments, energyMoments, snapToWords, snapSegments, computePieces, piecesDuration, isFiller, autoCount, LENGTHS, windows };
+  window.CMEngine = { HOP, SR, decodeMono, energy, chunkBounds, wavBlob, transcribe, aiMoments, energyMoments, snapToWords, snapSegments, computePieces, piecesDuration, isFiller, autoCount, LENGTHS, windows, sentenceEnds, finishClips };
 })();

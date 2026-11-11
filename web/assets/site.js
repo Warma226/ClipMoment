@@ -83,7 +83,7 @@
   function startMontage(m) {
     if (m._on) return; m._on = true;
     const steps = m.querySelectorAll('.mt-steps li'), dur = m.querySelector('[data-dur]');
-    const DUR = ['12:34', '12:34', '1:12', '0:48', '0:48'];
+    const DUR = ['12:34', '12:34', '10:52', '1:08', '1:08'];
     let p = 0;
     const show = () => {
       m.classList.remove('p1', 'p2', 'p3', 'p4'); if (p) m.classList.add('p' + p);

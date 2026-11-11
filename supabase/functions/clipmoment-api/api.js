@@ -220,12 +220,19 @@ Critères, par ordre d'importance :
 3. Il contient une émotion forte, une opinion tranchée, un conflit, une révélation, une chute drôle, une phrase qu'on a envie de citer, ou un conseil concret.
 4. Il se termine à la fin d'une phrase, idéalement sur une chute.
 
+Chaque clip est une vraie mini-vidéo prête à publier, pas un simple extrait :
+- une accroche forte dans les premières secondes ;
+- le développement de l'idée, avec ce qu'il faut pour comprendre ;
+- une conclusion nette : la chute, la réponse, la morale ou la phrase qui marque.
+Ne termine JAMAIS au milieu d'une explication, d'une énumération, d'une histoire, ou sur une question sans réponse, ni sur une phrase qui annonce une suite (« et donc… », « deuxième chose… », « je vais vous dire… »). Si la conclusion arrive plus loin, va la chercher et retire le superflu au milieu.
+
 Tu es aussi monteur : un clip peut raccorder plusieurs morceaux pris dans l'extrait.
 - Garde uniquement ce qui sert l'histoire : l'accroche, l'explication essentielle, la chute.
 - Retire les digressions, les répétitions, les phrases inachevées, les passages hors sujet et les échanges sans intérêt.
 - Chaque morceau commence au début d'une phrase et finit à la fin d'une phrase, et dure au moins 2 secondes.
 - Garde l'ordre chronologique, sauf si une phrase très forte mérite d'ouvrir le clip comme accroche : tu peux alors la placer en premier.
-- La durée totale (somme des morceaux) respecte la durée demandée.
+- La durée totale (somme des morceaux) respecte la durée demandée. Vise le milieu de la fourchette : un clip trop court n'est pas publiable.
+- Le dernier morceau finit sur la fin de la phrase de conclusion.
 
 Pour chaque clip, écris :
 - "segments" : la liste des morceaux à enchaîner, dans l'ordre de lecture, chacun {"start": secondes, "end": secondes}.
@@ -322,7 +329,7 @@ function parseClips(content, first, last, min, max) {
     for (const g of segs) if (!kept.some((k) => g.start < k.end && g.end > k.start)) kept.push(g); // pas de morceaux qui se chevauchent
     if (!kept.length || kept.length > 12) continue;
     const total = kept.reduce((s2, g) => s2 + (g.end - g.start), 0);
-    if (total < min * 0.6 || total > max * 1.5) continue;
+    if (total < min * 0.7 || total > max * 1.4) continue; // le site rallonge ou raccourcit ensuite sur des phrases entières
     valid.push({ c, segs: kept, lo: Math.min(...kept.map((g) => g.start)), hi: Math.max(...kept.map((g) => g.end)), total });
   }
   valid.sort((x, y) => clampNum(y.c.score, 0, 100, 50) - clampNum(x.c.score, 0, 100, 50));

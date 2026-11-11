@@ -349,6 +349,8 @@
       }
       let clips = res.clips, fallback = false;
       if (!clips.length) { clips = E.energyMoments(feat, duration, opts); fallback = true; }
+      // Chaque clip devient une vidéo complète : 45 s à 1 min 30, début et fin sur des phrases entières.
+      clips = E.finishClips(clips, tr, opts.length, duration);
       clips = clips.map((c, i) => {
         const x = Object.assign({}, c);
         const segs = E.snapSegments(Array.isArray(c.segments) && c.segments.length ? c.segments : [[c.start, c.end]], tr.words, duration);
