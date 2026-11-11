@@ -73,7 +73,7 @@
     settings = await CM.loadSettings();
     $('#set-welcome').value = Number(settings.welcome_credits) || 0;
     $('#set-max').value = Number(settings.max_minutes) || 30;
-    $('#set-linkfee').value = settings.link_fee != null ? Number(settings.link_fee) : 3;
+    $('#set-linkfee').value = settings.link_fee != null ? Number(settings.link_fee) : 5;
     $('#packs').textContent = '';
     (Array.isArray(settings.packs) ? settings.packs : []).forEach(packRow);
     const pay = settings.payment || {};

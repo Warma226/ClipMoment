@@ -98,7 +98,7 @@
     $('#admin-link').hidden = !S.profile.is_admin;
     S.settings = await CM.loadSettings();
     $('#max-tag').textContent = (Number(S.settings.max_minutes) || 30) + ' min max';
-    $('#link-fee').textContent = String(S.settings.link_fee != null ? Number(S.settings.link_fee) : 3);
+    $('#link-fee').textContent = String(S.settings.link_fee != null ? Number(S.settings.link_fee) : 5);
     loadBrand();
     show('home');
     renderProjects();

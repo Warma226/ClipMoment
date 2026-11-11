@@ -154,7 +154,7 @@ main { padding-block: 40px 70px; overflow-x: clip; }
   if (session) $('#nav-app').textContent = 'Mon studio';
   const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }];
   const top = packs.length >= 3 ? 1 : packs.length - 1;
-  const fee = s.link_fee != null ? Number(s.link_fee) : 3;
+  const fee = s.link_fee != null ? Number(s.link_fee) : 5;
   const pay = s.payment || {};
   const w = Number(s.welcome_credits) || 0;
   if (w) $('#welcome-note').textContent = w + ' minutes offertes à l\'inscription pour essayer avant de payer.';

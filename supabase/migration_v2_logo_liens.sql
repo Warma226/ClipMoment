@@ -15,7 +15,7 @@ alter table public.profiles drop constraint if exists brand_taille;
 alter table public.profiles add constraint brand_taille check (brand is null or octet_length(brand::text) < 300000);
 
 -- ---------- Import par lien ----------
-insert into public.settings(key, value) values ('link_fee', '3'::jsonb) on conflict (key) do nothing;
+insert into public.settings(key, value) values ('link_fee', '5'::jsonb) on conflict (key) do nothing;
 
 create table if not exists public.link_imports (
   id          uuid primary key default gen_random_uuid(),
@@ -42,7 +42,7 @@ create or replace function public.start_link_import(p_user uuid, p_url text)
 returns json language plpgsql security definer set search_path = public as $$
 declare fee integer; bal integer; iid uuid;
 begin
-  select coalesce((value)::text::integer, 3) into fee from public.settings where key = 'link_fee';
+  select coalesce((value)::text::integer, 5) into fee from public.settings where key = 'link_fee';
   fee := greatest(coalesce(fee, 3), 0);
   if (select count(*) from public.link_imports where user_id = p_user and status = 'en_cours' and created_at > now() - interval '20 minutes') >= 2 then
     raise exception 'IMPORTS_EN_COURS';

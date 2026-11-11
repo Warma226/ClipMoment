@@ -110,7 +110,7 @@ puis **Commit changes**.
 1. Crée un compte gratuit sur [apify.com](https://apify.com) (le plan gratuit offre environ 5 $ de crédit par mois, soit une quinzaine d'imports).
 2. Apify → **Settings** → **API & Integrations** → copie ton **Personal API token**.
 3. Supabase → **Edge Functions** → **Secrets** → ajoute `APIFY_TOKEN` = ce jeton.
-4. Chaque import coûte au client **3 crédits** (réglable dans `/admin.html`), rendus automatiquement si l'import échoue.
+4. Chaque import coûte au client **5 crédits** (réglable dans `/admin.html`), rendus automatiquement si l'import échoue.
 
 Le service utilisé est l'acteur Apify `agentx~all-video-scraper` (environ 0,28 $ par vidéo sur le plan gratuit). Pour en changer, ajoute le secret `APIFY_ACTOR`.
 Rappelle à tes clients de n'importer que des vidéos qu'ils ont le droit de réutiliser.
@@ -119,7 +119,7 @@ Rappelle à tes clients de n'importer que des vidéos qu'ils ont le droit de ré
 
 ## Vendre
 
-- Le client crée un compte : il reçoit des crédits offerts (30 par défaut, réglable).
+- Le client crée un compte : il reçoit des crédits offerts (10 par défaut, réglable).
 - Pour recharger, il voit tes packs, tes numéros et ses instructions (bouton **Crédits**).
 - Il paie, t'envoie la capture sur WhatsApp, tu ajoutes ses crédits dans `/admin.html` (boutons rapides par pack).
 - **1 crédit = 1 minute de vidéo analysée.** Retouches et exports illimités. Les crédits sont remboursés automatiquement si l'analyse échoue avant la transcription.
