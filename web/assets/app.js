@@ -477,7 +477,54 @@
   const vid = $('#vid'), cv = $('#cv'), ctx = cv.getContext('2d');
   const cur = () => S.clips[S.sel];
 
-  function regroup() { const c = cur(); S.groups = c ? R.buildGroups(clipWords(c), c.start, c.end, c.style.template) : []; renderCapEdit(); S.dirty = true; }
+  function regroup() { const c = cur(); S.groups = c ? R.buildGroups(clipWords(c), c.start, c.end, c.style.template) : []; renderCapEdit(); S.dirty = true; rebuildSound(); }
+
+  /* ---------------- Sound design ---------------- */
+  const Snd = window.CMSound;
+  function relOf(c, t) { const k = pieceOf(c, t); return k < 0 ? null : before(c, k) + clamp(t - c._pieces[k][0], 0, c._pieces[k][1] - c._pieces[k][0]); }
+  function soundSpec(c) {
+    const st = c.style, P = c._pieces;
+    const speech = clipWords(c).map((w) => { const a = relOf(c, w[1]), b = relOf(c, w[2]); return a == null || b == null ? null : [+a.toFixed(2), +b.toFixed(2)]; }).filter(Boolean);
+    const cuts = [];
+    c.parts.filter((q) => q.on).forEach((q, i) => { if (!i) return; const k = P.findIndex((x) => x[0] >= q.s - 0.2); if (k > 0) cuts.push(+before(c, k).toFixed(2)); });
+    const pops = R.keyTimes(c, S.groups).map((t) => relOf(c, t)).filter((x) => x != null).map((x) => +x.toFixed(2));
+    return { len: +c._dur.toFixed(2), music: st.music || 'douce', musicVol: st.musicVol != null ? st.musicVol : 0.5, sfx: st.sfx !== false, speech, cuts, pops, seed: Snd.hash(c.id || c.title || '') };
+  }
+  let sndTimer = null, sndKey = '', sndJob = Promise.resolve();
+  function rebuildSound(now) {
+    const c = cur(); if (!c || !c._pieces || !Snd) return sndJob;
+    clearTimeout(sndTimer);
+    const run = () => {
+      const spec = soundSpec(c), key = JSON.stringify(spec);
+      if (key === sndKey) return sndJob;
+      sndKey = key;
+      const silent = spec.music === 'aucune' && !spec.sfx;
+      $('#snd-state').textContent = silent ? 'Voix seule' : 'Préparation…';
+      sndJob = (silent ? Promise.resolve(null) : Snd.build(spec)).then((buf) => {
+        if (key !== sndKey) return;
+        Snd.setBuffer(buf); $('#snd-state').textContent = silent ? 'Voix seule' : (Snd.STYLES[spec.music] || {}).label + (spec.sfx ? ' + effets' : '');
+      }).catch((e) => {
+        console.warn('[son]', e);
+        if (key !== sndKey) return;
+        Snd.setBuffer(null); $('#snd-state').textContent = 'Son indisponible';
+        if (!rebuildSound.retried) { rebuildSound.retried = true; sndKey = ''; setTimeout(() => rebuildSound(), 800); } // un nouvel essai
+      });
+      return sndJob;
+    };
+    if (now) return run();
+    sndTimer = setTimeout(run, 300);
+    return sndJob;
+  }
+  function renderSound() {
+    const st = cur().style, m = st.music || 'douce';
+    const r = $('#mu-' + m); if (r) r.checked = true;
+    $('#snd-vol').value = Math.round((st.musicVol != null ? st.musicVol : 0.5) * 100);
+    $('#f-snd-vol').hidden = m === 'aucune';
+    $('#snd-fx').checked = st.sfx !== false;
+  }
+  $$('input[name=music]').forEach((r) => r.addEventListener('change', () => { cur().style.music = r.value; renderSound(); rebuildSound(); scheduleSave(); }));
+  $('#snd-vol').addEventListener('input', (e) => { cur().style.musicVol = e.target.value / 100; rebuildSound(); scheduleSave(); });
+  $('#snd-fx').addEventListener('change', (e) => { cur().style.sfx = e.target.checked; rebuildSound(); scheduleSave(); });
   function seekPiece(i, off) {
     const c = cur(); if (!c || !S.url) return;
     S.pi = clamp(i, 0, c._pieces.length - 1);
@@ -535,7 +582,7 @@
     $('#fr-' + st.frame).checked = true; $('#in-manual').value = Math.round(st.manualX * 100);
     $('#result').hidden = true;
     tplFields(); frameFields();
-    regroup(); updTrim(); renderMontage(); renderLogoPanel();
+    regroup(); updTrim(); renderMontage(); renderLogoPanel(); renderSound();
     show('editor');
     if (S.url) { vid.pause(); seekPiece(0); }
     else toast('Resélectionne la vidéo d\'origine pour voir l\'aperçu.', 'err');
@@ -599,7 +646,7 @@
 
   const bindText = (id, key) => $(id).addEventListener('input', (e) => { cur()[key] = e.target.value; S.dirty = true; scheduleSave(); });
   bindText('#in-title', 'title'); bindText('#in-context', 'context'); bindText('#in-hook', 'hook');
-  $('#in-kw').addEventListener('input', (e) => { cur().keywords = e.target.value.split(',').map((x) => x.trim()).filter(Boolean).slice(0, 12); S.dirty = true; scheduleSave(); });
+  $('#in-kw').addEventListener('input', (e) => { cur().keywords = e.target.value.split(',').map((x) => x.trim()).filter(Boolean).slice(0, 12); S.dirty = true; scheduleSave(); rebuildSound(); });
   $$('input[name=tpl]').forEach((r) => r.addEventListener('change', () => {
     const st = cur().style; st.template = r.value;
     st.captions = r.value !== 'citation';
@@ -635,6 +682,7 @@
       const src = a.createMediaElementSource(vid); src.connect(a.destination);
       if (a.createMediaStreamDestination) { mdest = a.createMediaStreamDestination(); src.connect(mdest); }
       actx = a;
+      if (Snd) Snd.attach(a, [a.destination, mdest]); // musique et effets vont au haut-parleur et dans l'export
     } catch (e) { actx = null; mdest = null; }
   }
   function updPlay() { $('#ic-play').hidden = S.playing; $('#ic-pause').hidden = !S.playing; $('#play').setAttribute('aria-label', S.playing ? 'Pause' : 'Lire'); }
@@ -672,7 +720,7 @@
   let lastTc = '';
   function frame() {
     requestAnimationFrame(frame);
-    if (S.view !== 'editor') return;
+    if (S.view !== 'editor') { if (Snd) Snd.stop(); return; }
     const c = cur(); if (!c || !c._pieces) return;
     const P = c._pieces, len = c._dur;
     if (!(S.pi >= 0 && S.pi < P.length)) S.pi = 0;
@@ -685,6 +733,7 @@
     }
     if (exporting && S.exporting.started && vid.ended) finishRec();
     const rel = clamp(before(c, S.pi) + (t - P[S.pi][0]), 0, len);
+    if (actx && Snd) Snd.sync(rel, S.playing && !S.jumping && !vid.paused);
     if (S.playing || S.dirty || S.exporting) {
       R.draw(ctx, S.url ? vid : null, S.url ? vid.videoWidth : 0, S.url ? vid.videoHeight : 0, c, S.groups, t, S.brand, rel, len);
       S.dirty = false;
@@ -699,7 +748,7 @@
   let wake = null;
   function lockUi(on) {
     $('#exp-wrap').hidden = !on; $('#rec').hidden = !on; $('#export').disabled = on || !S.url;
-    $$('[data-trim], #play, #scrub, #ed-back, input[name=tpl], input[name=frame], #mt-silence, #mt-fillers, #mt-parts input, #mt-parts button').forEach((n) => { n.disabled = on; });
+    $$('[data-trim], #play, #scrub, #ed-back, input[name=tpl], input[name=frame], #mt-silence, #mt-fillers, #mt-parts input, #mt-parts button, input[name=music], #snd-vol, #snd-fx').forEach((n) => { n.disabled = on; });
   }
   async function doExport() {
     const c = cur(); if (!c || !S.url || S.exporting) return;
@@ -708,6 +757,7 @@
     ensureAudio();
     const mime = R.pickMime();
     vid.pause();
+    try { await rebuildSound(true); } catch (e) { /* l'export continue avec la voix seule */ }
     const tracks = cv.captureStream(30).getVideoTracks();
     if (mdest) mdest.stream.getAudioTracks().forEach((t) => tracks.push(t));
     let rec;

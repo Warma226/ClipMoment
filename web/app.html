@@ -319,6 +319,20 @@ a.pack:hover { border-color: var(--accent); }
           <div class="stack" style="gap:6px"><span class="lbl">Passages raccordés, dans l'ordre du clip</span><ol class="parts" id="mt-parts"></ol></div>
         </div>
 
+        <div class="panel" id="p-sound">
+          <div class="ph"><h2>Son</h2><span class="tag mono" id="snd-state"></span></div>
+          <span class="lbl">Musique de fond</span>
+          <div class="seg" role="radiogroup" aria-label="Musique de fond">
+            <label><input type="radio" name="music" id="mu-aucune" value="aucune"><span>Aucune</span></label>
+            <label><input type="radio" name="music" id="mu-douce" value="douce"><span>Douce</span></label>
+            <label><input type="radio" name="music" id="mu-energique" value="energique"><span>Énergique</span></label>
+            <label><input type="radio" name="music" id="mu-suspense" value="suspense"><span>Suspense</span></label>
+          </div>
+          <label class="field" id="f-snd-vol"><span class="lbl">Volume de la musique</span><input type="range" id="snd-vol" min="5" max="100" value="50"></label>
+          <label class="check"><input type="checkbox" id="snd-fx"> Effets sonores : impact d'ouverture, whoosh aux raccords, pop sur les mots-clés, note de fin</label>
+          <p class="note">Musique composée automatiquement pour chaque clip, libre de droits. Elle baisse toute seule quand quelqu'un parle. Lance la lecture pour écouter.</p>
+        </div>
+
         <div class="panel">
           <div class="ph"><h2>Sous-titres</h2><label class="check"><input type="checkbox" id="in-caps"> Afficher</label></div>
           <label class="field"><span class="lbl">Hauteur des sous-titres</span><input type="range" id="in-capy" min="35" max="88" value="70"></label>
@@ -413,6 +427,7 @@ a.pack:hover { border-color: var(--accent); }
 <script src="assets/core.js"></script>
 <script src="assets/engine.js"></script>
 <script src="assets/render.js"></script>
+<script src="assets/sound.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

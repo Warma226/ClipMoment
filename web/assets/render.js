@@ -24,8 +24,10 @@
   function defaultStyle(template) {
     return { template: template || 'citation', titleSec: template === 'citation' || !template ? 14 : template === 'podcast' ? 5 : 3,
       captions: !!(TEMPLATES[template || 'citation'] || {}).captions, capY: 0.7, frame: 'auto', manualX: 0.5, track: null, trackV: 2, edits: {},
-      cutSilence: true, cutFillers: true };
+      cutSilence: true, cutFillers: true,
+      music: MUSIC_FOR[template || 'citation'] || 'douce', musicVol: 0.5, sfx: true };
   }
+  const MUSIC_FOR = { citation: 'douce', dynamique: 'energique', sobre: 'douce', punch: 'energique', podcast: 'douce', tuto: 'energique' };
 
   /* ---------- Sous-titres : regroupement des mots ---------- */
 
@@ -76,6 +78,17 @@
     if (best < 0 && force) texts.forEach((t, i) => { const n = norm(t); if (n && !STOP.has(n) && (best < 0 || n.length > norm(texts[best]).length)) best = i; });
     if (best < 0 && force && texts.length) best = texts.length - 1;
     return best;
+  }
+
+  // Instants (temps de la vidéo source) où un mot est mis en avant : sert aux « pops » du sound design.
+  function keyTimes(clip, groups) {
+    const t = clip.style && clip.style.template;
+    if (!KEY_TPL[t] || !groups) return [];
+    const kw = kwSet(clip);
+    return groups.map((g) => {
+      const i = keyIndex(g.words.map((w) => w[0]), kw, false);
+      return i >= 0 && (kw.has(norm(g.words[i][0])) || /\d/.test(g.words[i][0]) || t === 'punch') ? g.words[i][1] : null;
+    }).filter((x) => x != null);
   }
 
   /* ---------- Dessin ---------- */
@@ -528,5 +541,5 @@
     return '';
   }
 
-  window.CMRender = { W, H, TEMPLATES, defaultStyle, buildGroups, draw, analyzeFraming, detector, pickMime, trackAt, keyIndex };
+  window.CMRender = { W, H, TEMPLATES, defaultStyle, buildGroups, draw, analyzeFraming, detector, pickMime, trackAt, keyIndex, keyTimes };
 })();
