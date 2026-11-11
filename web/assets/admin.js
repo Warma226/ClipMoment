@@ -64,8 +64,9 @@
     const pr = el('input', { type: 'text', value: p ? p.price : '', placeholder: '1 000 F', 'aria-label': 'Prix affiché' });
     const nm = el('input', { type: 'text', value: p && p.name || '', maxlength: '30', placeholder: 'Nom (ex. Créateur)', 'aria-label': 'Nom du pack' });
     const old = el('input', { type: 'text', value: p && p.old_price || '', maxlength: '20', placeholder: 'Ancien prix (promo)', 'aria-label': 'Ancien prix, seulement pour une vraie promotion' });
+    const per = el('input', { type: 'text', value: p ? (p.period || '') : 'mois', maxlength: '12', placeholder: 'Période (mois, vide = sans)', 'aria-label': 'Période, par exemple mois' });
     const tl = el('input', { type: 'text', class: 'wide', value: p && p.tagline || '', maxlength: '60', placeholder: 'Phrase courte (ex. Pour publier chaque semaine)', 'aria-label': 'Phrase du pack' });
-    const row = el('div', { class: 'packrow' }, [c, pr, nm, old, tl, el('button', { class: 'btn small ghost', type: 'button', text: 'Retirer', onclick: () => row.remove() })]);
+    const row = el('div', { class: 'packrow' }, [c, pr, nm, old, per, el('span'), tl, el('button', { class: 'btn small ghost', type: 'button', text: 'Retirer', onclick: () => row.remove() })]);
     $('#packs').appendChild(row);
   }
   async function loadSettings() {
@@ -78,18 +79,19 @@
     const pay = settings.payment || {};
     $('#set-instr').value = pay.instructions || ''; $('#set-om').value = pay.orange_money || ''; $('#set-wave').value = pay.wave || ''; $('#set-wa').value = pay.whatsapp || '';
     const q = $('#quick'); q.textContent = '';
-    (Array.isArray(settings.packs) ? settings.packs : []).forEach((p) => q.appendChild(el('button', { class: 'btn small', type: 'button', text: '+' + p.credits + ' (' + p.price + ')', onclick: () => { $('#add-amount').value = p.credits; $('#add-note').value = p.price; } })));
+    (Array.isArray(settings.packs) ? settings.packs : []).forEach((p) => q.appendChild(el('button', { class: 'btn small', type: 'button', text: '+' + p.credits + ' (' + p.price + (p.period ? '/' + p.period : '') + ')', onclick: () => { $('#add-amount').value = p.credits; $('#add-note').value = p.price; } })));
   }
   $('#pack-add').addEventListener('click', () => packRow(null));
 
   $('#set-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const packs = Array.from(document.querySelectorAll('#packs .packrow')).map((r) => {
-      const [c, p, n, o, t] = r.querySelectorAll('input');
+      const [c, p, n, o, pe, t] = r.querySelectorAll('input');
       const pk = { credits: Math.round(Number(c.value)), price: p.value.trim() };
       if (n.value.trim()) pk.name = n.value.trim();
       if (t.value.trim()) pk.tagline = t.value.trim();
       if (o.value.trim()) pk.old_price = o.value.trim();
+      if (pe.value.trim()) pk.period = pe.value.trim().replace(/^\/\s*/, '');
       return pk;
     }).filter((p) => p.credits > 0 && p.price);
     try {

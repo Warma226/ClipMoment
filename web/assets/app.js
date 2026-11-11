@@ -753,7 +753,7 @@
   async function openCredits() {
     const st = S.settings, packs = Array.isArray(st.packs) ? st.packs : [], pay = st.payment || {};
     const pb = $('#packs'); pb.textContent = '';
-    packs.forEach((p, i) => pb.appendChild(el('a', { class: 'pack', href: 'tarifs.html#pack-' + i }, [el('b', { text: String(p.credits) }), el('span', { class: 'muted small', text: 'crédits = ' + p.credits + ' min' }), el('span', { text: p.price })])));
+    packs.forEach((p, i) => pb.appendChild(el('a', { class: 'pack', href: 'tarifs.html#pack-' + i }, [el('b', { text: String(p.credits) }), el('span', { class: 'muted small', text: 'crédits = ' + p.credits + ' min' }), el('span', { text: p.price + (p.period ? ' / ' + p.period : '') })])));
     $('#pay-instr').textContent = pay.instructions || '';
     const rows = $('#pay-rows'); rows.textContent = '';
     [['Orange Money', pay.orange_money], ['Wave', pay.wave], ['WhatsApp', pay.whatsapp]].forEach(([k, v]) => {

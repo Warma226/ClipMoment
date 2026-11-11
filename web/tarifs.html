@@ -37,6 +37,8 @@ main { padding-block: 40px 70px; overflow-x: clip; }
 .plan .tag2 { color: var(--muted); font-size: 15px; }
 .plan .price { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 18px 0 4px; }
 .plan .price b { font: 700 40px/1 var(--display); letter-spacing: -.03em; }
+.plan .price small { font-size: 16px; color: var(--muted); font-weight: 500; margin-left: -4px; }
+.plan.top .price small { color: rgba(255, 255, 255, .7); }
 .plan .price s { font: 600 30px/1 var(--display); color: var(--line); letter-spacing: -.02em; }
 .plan .per { font-size: 13.5px; color: var(--muted); font-family: var(--mono); }
 .plan .btn { margin: 18px 0 6px; min-height: 48px; border-radius: 12px; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); }
@@ -94,7 +96,7 @@ main { padding-block: 40px 70px; overflow-x: clip; }
     <div class="perks">
       <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="5" width="15" height="11" rx="2"/><path d="M2.5 8.5h15M6 13h3"/></svg>Paiement Orange Money ou Wave</span><i></i>
       <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 5.5l1.5 1.5L7 4.5M3 11l1.5 1.5L7 10M10 6h7M10 11.5h7M10 16h7"/></svg>Toutes les fonctions dans chaque pack</span><i></i>
-      <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 5.5V10l3 2"/></svg>Minutes sans date d'expiration</span>
+      <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 5.5V10l3 2"/></svg>Minutes non utilisées reportées au mois suivant</span>
     </div>
   </div>
 
@@ -104,6 +106,7 @@ main { padding-block: 40px 70px; overflow-x: clip; }
     <span class="lock"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="9" width="12" height="8.5" rx="2"/><path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/></svg>Paiement par Orange Money ou Wave, crédits ajoutés à ton compte après réception.</span>
     <span id="welcome-note"></span>
     <hr>
+    <span>Sans engagement : tu renouvelles quand tu veux par Orange Money ou Wave. Les minutes non utilisées restent sur ton compte.</span>
     <span>1 crédit = 1 minute de vidéo analysée. Si une analyse échoue avant la transcription, tes crédits sont rendus automatiquement.</span>
     <span id="contact-line"></span>
   </div>
@@ -149,7 +152,7 @@ main { padding-block: 40px 70px; overflow-x: clip; }
 
   const [s, session] = await Promise.all([CM.loadSettings(), CM.auth.session().catch(() => null)]);
   if (session) $('#nav-app').textContent = 'Mon studio';
-  const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 60, price: '1 000 F' }, { credits: 300, price: '4 000 F' }, { credits: 900, price: '10 000 F' }];
+  const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }];
   const top = packs.length >= 3 ? 1 : packs.length - 1;
   const fee = s.link_fee != null ? Number(s.link_fee) : 3;
   const pay = s.payment || {};
@@ -170,14 +173,15 @@ main { padding-block: 40px 70px; overflow-x: clip; }
     card.appendChild(el('h2', { text: nm }));
     card.appendChild(el('span', { class: 'tag2', text: tl }));
     const pr = el('div', { class: 'price' }, [el('b', { text: p.price })]);
+    if (p.period) pr.appendChild(el('small', { text: '/ ' + p.period }));
     if (p.old_price) pr.appendChild(el('s', { text: p.old_price, 'aria-label': 'au lieu de ' + p.old_price }));
     card.appendChild(pr);
     card.appendChild(el('span', { class: 'per', text: per ? '≈ ' + per + ' F la minute' : '' }));
     card.appendChild(el('button', { class: 'btn', type: 'button', text: 'Choisir le pack ' + nm, onclick: () => openPay(p, nm) }));
-    const mins = el('div', { class: 'mins' }); mins.innerHTML = SCREEN; mins.appendChild(document.createTextNode(p.credits + ' minutes de vidéo à analyser'));
+    const mins = el('div', { class: 'mins' }); mins.innerHTML = SCREEN; mins.appendChild(document.createTextNode(p.credits + ' minutes de vidéo ' + (p.period ? 'par ' + p.period : 'à analyser')));
     card.appendChild(mins);
     const ul = el('ul');
-    ['Environ ' + clips + ' clips proposés par l\'IA', 'Montage, sous-titres animés et logo', 'Import par lien YouTube et Facebook (' + fee + ' crédits)', 'Exports illimités, sans filigrane'].forEach((t) => {
+    [p.period ? 'Environ ' + clips + ' clips par ' + p.period + ', choisis par l\'IA' : 'Environ ' + clips + ' clips proposés par l\'IA', 'Montage, sous-titres animés et logo', 'Import par lien YouTube et Facebook (' + fee + ' crédits)', 'Exports illimités, sans filigrane'].forEach((t) => {
       const li = el('li'); li.innerHTML = CHECK; li.appendChild(el('span', { text: t })); ul.appendChild(li);
     });
     card.appendChild(ul);
@@ -187,7 +191,8 @@ main { padding-block: 40px 70px; overflow-x: clip; }
   function openPay(p, nm) {
     $('#pay-title').textContent = 'Payer le pack ' + nm;
     $('#pay-pack').textContent = nm + ' · ' + p.credits + ' min';
-    $('#pay-price').textContent = p.price; $('#pay-price2').textContent = p.price; $('#pay-mins').textContent = String(p.credits);
+    const per = p.period ? ' / ' + p.period : '';
+    $('#pay-price').textContent = p.price + per; $('#pay-price2').textContent = p.price; $('#pay-mins').textContent = String(p.credits);
     const rows = $('#pay-rows'); rows.textContent = '';
     [['Orange Money', pay.orange_money], ['Wave', pay.wave]].forEach(([k, v]) => {
       if (!v) return;
@@ -200,7 +205,7 @@ main { padding-block: 40px 70px; overflow-x: clip; }
     else acc.append('Crée d\'abord ton compte gratuit pour qu\'on sache où ajouter tes minutes. ', el('a', { href: 'app.html', text: 'Créer mon compte' }));
     const wa = $('#pay-wa'), digits = String(pay.whatsapp || '').replace(/[^\d]/g, '');
     if (digits) {
-      const msg = 'Bonjour, je viens de payer le pack ' + nm + ' (' + p.price + ', ' + p.credits + ' min) sur ClipMoment.' + (session ? ' Mon compte : ' + session.user.email + '.' : '') + ' Voici la capture du paiement.';
+      const msg = 'Bonjour, je viens de payer le pack ' + nm + ' (' + p.price + per + ', ' + p.credits + ' min) sur ClipMoment.' + (session ? ' Mon compte : ' + session.user.email + '.' : '') + ' Voici la capture du paiement.';
       wa.href = 'https://wa.me/' + digits + '?text=' + encodeURIComponent(msg); wa.hidden = false;
     } else wa.hidden = true;
     $('#pay-instr').textContent = pay.instructions || '';

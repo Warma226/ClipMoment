@@ -272,8 +272,8 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
       <article class="folder">
         <div class="ui" aria-hidden="true">
           <span class="lb">Pack le plus choisi</span>
-          <div class="price" id="fold-price">4 000 F</div>
-          <span class="mini" id="fold-mins">300 minutes de vidéo à analyser</span>
+          <div class="price" id="fold-price">7 500 F</div>
+          <span class="mini" id="fold-mins">100 minutes de vidéo par mois</span>
           <div class="pay"><span>Orange Money</span><span>Wave</span></div>
         </div>
         <div><h3>Un prix pensé pour l'Afrique</h3><p>Tu paies seulement les minutes analysées, en mobile money. Montage et exports illimités.</p></div>
@@ -316,7 +316,7 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
       <details><summary>Ma vidéo est-elle envoyée sur internet ?</summary><p>Seul l'audio est envoyé, pour la transcription. La vidéo reste sur ton appareil : le découpage, les sous-titres et l'export se font dans ton navigateur.</p></details>
       <details><summary>Combien de temps ça prend ?</summary><p>L'analyse d'une vidéo de 30 minutes prend en général 2 à 5 minutes. L'export d'un clip prend à peu près sa durée : 40 secondes pour un clip de 40 secondes.</p></details>
       <details><summary>Je peux coller un lien YouTube ?</summary><p>Oui : colle un lien YouTube, Facebook, Instagram, TikTok ou X dans le studio. L'import coûte quelques crédits en plus, rendus si l'import échoue. N'importe que des vidéos que tu as le droit de réutiliser.</p></details>
-      <details><summary>Mes crédits expirent-ils ?</summary><p>Non. Tes crédits restent sur ton compte tant que tu ne les utilises pas.</p></details>
+      <details><summary>Mes crédits expirent-ils ?</summary><p>Non. Les minutes que tu n'utilises pas restent sur ton compte et s'ajoutent à celles du mois suivant. Sans engagement : tu renouvelles seulement quand tu veux.</p></details>
     </div>
   </section>
 
@@ -348,21 +348,21 @@ footer { padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); colo
   document.querySelectorAll('[data-brand]').forEach((n) => { n.textContent = CM.brand; });
   document.getElementById('year').textContent = new Date().getFullYear();
   const s = await CM.loadSettings();
-  const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 60, price: '1 000 F' }, { credits: 300, price: '4 000 F' }, { credits: 900, price: '10 000 F' }];
+  const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }];
   const top = packs.length > 1 ? 1 : 0;
   const box = document.getElementById('price');
   packs.forEach((p, i) => {
     box.appendChild(CM.el('div', { class: 'plan' + (i === top ? ' top' : '') }, [
       CM.el('span', { class: 'tag', text: i === top ? 'Le plus choisi' : 'Pack' }),
       CM.el('b', { text: p.credits + ' min' }),
-      CM.el('span', { class: 'sub', text: 'de vidéo à analyser' }),
-      CM.el('span', { class: 'amt', text: p.price }),
+      CM.el('span', { class: 'sub', text: p.period ? 'de vidéo par ' + p.period : 'de vidéo à analyser' }),
+      CM.el('span', { class: 'amt', text: p.price + (p.period ? ' / ' + p.period : '') }),
       CM.el('a', { class: 'btn' + (i === top ? '' : ' primary'), href: 'tarifs.html#pack-' + i, text: 'Choisir ce pack' }),
     ]));
   });
   const tp = packs[top];
-  document.getElementById('fold-price').textContent = tp.price;
-  document.getElementById('fold-mins').textContent = tp.credits + ' minutes de vidéo à analyser';
+  document.getElementById('fold-price').textContent = tp.price + (tp.period ? ' / ' + tp.period : '');
+  document.getElementById('fold-mins').textContent = tp.credits + ' minutes de vidéo ' + (tp.period ? 'par ' + tp.period : 'à analyser');
   const w = Number(s.welcome_credits) || 0;
   if (w) {
     document.getElementById('cta').textContent = 'Essayer gratuitement';
