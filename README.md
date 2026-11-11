@@ -6,7 +6,7 @@ Plateforme qui transforme des vidéos longues (interviews, podcasts, lives, cour
 - **Transcription mot par mot** (Whisper via Groq).
 - **L'IA choisit les moments viraux et fait le montage** : elle raccorde plusieurs passages (accroche, explication, chute), écarte les digressions et répétitions, écrit un titre-citation et donne une note sur 100.
 - **Silences et hésitations supprimés** (« euh », « hum »…) au mot près ; chaque passage peut être retiré ou remis dans l'éditeur.
-- **3 gabarits** : *Citation* (bandes blanches façon chaîne TV), *Sous-titres animés* (mot par mot), *Sobre*.
+- **6 gabarits** : *Citation* (bandes blanches façon chaîne TV), *Sous-titres animés* (mot par mot), *Mots-clés* (petit italique + gros mot en couleur, zoom à chaque coupe), *Podcast* (titre et plan large, puis plein écran sur la personne qui parle), *Tuto* (consignes en majuscules, un mot en couleur), *Sobre*. L'IA choisit les mots à mettre en avant.
 - **Cadrage vertical qui suit le visage**, ou fond flou, ou réglage manuel.
 - **Ta marque** : logo (position, taille, opacité) enregistré dans le compte, couleur, signature.
 - **Comptes clients, crédits** (1 crédit = 1 minute analysée) et **page admin** pour créditer après un paiement Orange Money ou Wave.

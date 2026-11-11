@@ -8,16 +8,21 @@
     citation: { label: 'Citation', note: 'Citation entre guillemets dans des bandes blanches, façon chaîne TV.', captions: false },
     dynamique: { label: 'Sous-titres animés', note: 'Gros sous-titres mot par mot, le mot prononcé en couleur.', captions: true },
     sobre: { label: 'Sobre', note: 'Sous-titres blancs discrets, phrase par phrase.', captions: true },
+    punch: { label: 'Mots-clés', note: 'Le mot important en grand et en couleur, zoom à chaque coupe.', captions: true },
+    podcast: { label: 'Podcast', note: 'Ouverture titre + plan large, puis plein écran sur la personne qui parle.', captions: true },
+    tuto: { label: 'Tuto', note: 'Gros titre au début, consignes en majuscules avec un mot en couleur.', captions: true },
   };
+  const KEY_TPL = { punch: 1, podcast: 1, tuto: 1 };
 
   const FONTS = {
     quote: '"Roboto Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif',
     bold: 'Montserrat, "Arial Black", Impact, sans-serif',
     body: 'Onest, "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+    serif: '"Playfair Display", Georgia, "Times New Roman", serif',
   };
 
   function defaultStyle(template) {
-    return { template: template || 'citation', titleSec: template === 'citation' || !template ? 14 : 3,
+    return { template: template || 'citation', titleSec: template === 'citation' || !template ? 14 : template === 'podcast' ? 5 : 3,
       captions: !!(TEMPLATES[template || 'citation'] || {}).captions, capY: 0.7, frame: 'auto', manualX: 0.5, track: null, trackV: 2, edits: {},
       cutSilence: true, cutFillers: true };
   }
@@ -27,7 +32,8 @@
   function buildGroups(words, start, end, mode) {
     const ws = (words || []).filter((w) => w[2] > start + 0.02 && w[1] < end - 0.02);
     const karaoke = mode === 'dynamique';
-    const maxN = karaoke ? 3 : 7, maxC = karaoke ? 18 : 38, stop = karaoke ? /[.!?…,;:]$/ : /[.!?…]$/;
+    const LIM = { dynamique: [3, 18], punch: [4, 26], tuto: [5, 30], podcast: [6, 34] }[mode] || [7, 38];
+    const maxN = LIM[0], maxC = LIM[1], stop = karaoke || mode === 'punch' || mode === 'tuto' ? /[.!?…,;:]$/ : /[.!?…]$/;
     const out = []; let cur = [];
     const flush = () => { if (cur.length) { out.push({ words: cur, start: cur[0][1], end: cur[cur.length - 1][2] }); cur = []; } };
     for (const w of ws) {
@@ -40,6 +46,36 @@
     flush();
     out.forEach((g, i) => { const nx = out[i + 1]; g.until = nx ? Math.min(nx.start, g.end + 0.8) : g.end + 0.6; g.key = g.start.toFixed(2); });
     return out;
+  }
+
+  /* ---------- Mots-clés : le mot à mettre en avant dans un groupe ---------- */
+
+  const STOP = new Set(('le la les un une des de du d l à a au aux et ou mais donc or ni car que qu qui quoi dont où ce c cet cette ces mon ma mes ton ta tes son sa ses ' +
+    'notre nos votre vos leur leurs je j tu il elle on nous vous ils elles me m te t se s lui y en ne n pas plus très bien tout tous toute toutes est était sont ' +
+    'être avoir ai as ont fait faire dans sur sous avec sans pour par comme quand alors aussi même encore déjà si oui non là ça cela ceci voilà vraiment ' +
+    'parce juste après avant chez entre vers peut veux veut dit dire the an and or but to of in on at for with is are was were be it this that you we they ' +
+    'he she my your our their so just very really what when how do does did have has had not no yes him her them its euh hum ben bon').split(' '));
+  const norm = (w) => String(w || '').toLowerCase().replace(/^[a-zà-ÿ]{1,2}['’]/i, '').replace(/[^\p{L}\p{N}$€%]/gu, '');
+  function kwSet(clip) {
+    const src = Array.isArray(clip.keywords) ? clip.keywords : [];
+    const sig = src.join('|');
+    if (clip._kwSig !== sig) { clip._kwSig = sig; clip._kw = new Set(src.flatMap((k) => String(k).split(/\s+/)).map(norm).filter((k) => k.length > 1)); }
+    return clip._kw;
+  }
+  // Index du mot à mettre en avant : mot-clé donné par l'IA, sinon nombre, sinon mot long et porteur de sens.
+  function keyIndex(texts, kw, force) {
+    let best = -1, bs = 0;
+    texts.forEach((t, i) => {
+      const n = norm(t); if (!n) return;
+      let sc = 0;
+      if (kw && kw.has(n)) sc = 100 + n.length;
+      else if (/\d/.test(n)) sc = 80;
+      else if (!STOP.has(n) && n.length >= 5) sc = n.length;
+      if (sc > bs) { bs = sc; best = i; }
+    });
+    if (best < 0 && force) texts.forEach((t, i) => { const n = norm(t); if (n && !STOP.has(n) && (best < 0 || n.length > norm(texts[best]).length)) best = i; });
+    if (best < 0 && force && texts.length) best = texts.length - 1;
+    return best;
   }
 
   /* ---------- Dessin ---------- */
@@ -60,7 +96,7 @@
     return track[track.length - 1][1];
   }
 
-  function drawVideo(ctx, src, sw, sh, st, rel) {
+  function drawVideo(ctx, src, sw, sh, st, rel, zoom) {
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     if (!sw || !sh) return;
     const vertical = sh / sw >= 1.5;
@@ -79,10 +115,13 @@
         return;
       }
       let s = H / sh; if (sw * s < W) s = W / sw;
+      s *= zoom || 1;
       const dw = sw * s, dh = sh * s;
       const cx = mode === 'cover' ? 0.5 : st.frame === 'manuel' ? st.manualX : trackAt(st.track, rel);
       const x = clamp(W / 2 - cx * dw, W - dw, 0);
-      ctx.drawImage(src, x, (H - dh) / 2, dw, dh);
+      // Avec un zoom, on garde le haut du cadre (le visage) à la même hauteur.
+      const y = zoom && zoom !== 1 ? clamp(H * 0.38 - 0.38 * dh, H - dh, 0) : (H - dh) / 2;
+      ctx.drawImage(src, x, y, dw, dh);
     } catch (e) { /* image pas encore prête */ }
   }
 
@@ -156,17 +195,135 @@
     ctx.restore();
   }
 
+  // Gros titre sans boîte (Mots-clés, Tuto) : mot-clé en couleur, apparition en zoom.
+  function drawBigTitle(ctx, clip, st, rel, len, brand, tuto) {
+    const text = String(clip.hook || clip.title || '').replace(/[«»"“”]/g, '').trim().toUpperCase();
+    const a = fadeAlpha(rel, st.titleSec, len);
+    if (!text || a <= 0) return;
+    const words = text.split(/\s+/).slice(0, 7);
+    const hl = brand.highlight || (tuto ? '#FF8A1F' : '#FFB21E');
+    const ki = tuto ? -1 : keyIndex(words, kwSet(clip), true);
+    const pop = clamp(rel / 0.25, 0, 1), sc = 1.18 - 0.18 * (1 - Math.pow(1 - pop, 3));
+    ctx.save(); ctx.globalAlpha = a * pop; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    let size = tuto ? 92 : 78;
+    const font = (z) => '900 ' + z + 'px ' + FONTS.bold;
+    ctx.font = font(size);
+    let lines = wrap(ctx, words.join(' '), W * 0.86);
+    while ((lines.length > 3 || lines.some((l) => ctx.measureText(l).width > W * 0.9)) && size > 44) { size -= 6; ctx.font = font(size); lines = wrap(ctx, words.join(' '), W * 0.86); }
+    const lh = size * 1.05, y0 = H * (tuto ? 0.13 : 0.12);
+    ctx.translate(W / 2, y0 + (lines.length * lh) / 2); ctx.scale(sc, sc); ctx.translate(-W / 2, -(y0 + (lines.length * lh) / 2));
+    ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 3;
+    let wi = 0;
+    lines.forEach((l, r) => {
+      const ws = l.split(' '), cy = y0 + lh * r + lh / 2;
+      const sp = ctx.measureText(' ').width, tw = ws.reduce((t, w) => t + ctx.measureText(w).width, 0) + sp * (ws.length - 1);
+      let x = (W - tw) / 2;
+      ws.forEach((w) => {
+        const ww = ctx.measureText(w).width;
+        ctx.fillStyle = tuto ? (r === 0 ? hl : '#FFFFFF') : (wi === ki ? hl : '#FFFFFF');
+        ctx.textAlign = 'left'; ctx.fillText(w, x, cy);
+        x += ww + sp; wi++;
+      });
+    });
+    ctx.restore();
+  }
+
+  // Podcast : pendant l'ouverture, plan large sur fond noir et titre entre guillemets au-dessus.
+  function podcastIntro(st, rel, len, sw, sh) { return st.titleSec > 0 && rel < Math.min(st.titleSec, len) && sw && sh && sh / sw < 1.2; }
+  function drawPodcastIntro(ctx, src, sw, sh, clip, st, rel, len) {
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    const dw = W, dh = sw ? sh * (W / sw) : 0, y = H * 0.47 - dh / 2;
+    try { ctx.drawImage(src, 0, y, dw, dh); } catch (e) { /* image pas encore prête */ }
+    const text = String(clip.title || clip.hook || '').replace(/[«»"“”]/g, '').trim();
+    if (!text) return;
+    ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#FFFFFF';
+    let size = 46; ctx.font = '700 ' + size + 'px ' + FONTS.body;
+    // « § » colle les guillemets aux mots voisins pendant le retour à la ligne (pas de guillemet seul sur une ligne).
+    const q = '«§' + text + '§»';
+    let lines = wrap(ctx, q, W * 0.86);
+    while (lines.length > 3 && size > 32) { size -= 4; ctx.font = '700 ' + size + 'px ' + FONTS.body; lines = wrap(ctx, q, W * 0.86); }
+    lines = lines.slice(0, 4).map((l) => l.replace(/§/g, '\u202f'));
+    const lh = size * 1.22, bottom = y - 34, top = Math.max(70, bottom - lines.length * lh);
+    lines.forEach((l, i) => ctx.fillText(l, W / 2, top + lh * i + lh / 2));
+    ctx.restore();
+  }
+
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
-  function drawCaptions(ctx, groups, st, tAbs, brand) {
+  // Sous-titres avec un mot mis en avant : Mots-clés (petit italique + gros mot en couleur), Podcast (phrase + mot en gras), Tuto (majuscules + mot en couleur).
+  function drawKeyCaptions(ctx, g, edited, st, tAbs, brand, y, kw) {
+    const timed = edited == null;
+    const toks = timed ? g.words.map((w) => ({ t: w[0], s: w[1] })) : edited.split(/\s+/).filter(Boolean).map((t) => ({ t, s: -1 }));
+    if (!toks.length) return;
+    const ki = keyIndex(toks.map((x) => x.t), kw, st.template === 'punch');
+    const said = (i) => !timed || tAbs >= toks[i].s - 0.04;
+    ctx.shadowColor = 'rgba(0,0,0,.75)';
+    if (st.template === 'punch') {
+      const hl = brand.highlight || '#FFB21E';
+      const pre = toks.slice(0, ki).filter((x, i) => said(i)).map((x) => x.t).join(' ');
+      const post = toks.slice(ki + 1).filter((x, i) => said(ki + 1 + i)).map((x) => x.t).join(' ');
+      const key = toks[ki].t.replace(/[.,;:!?…]+$/, '').toUpperCase();
+      const shown = said(ki);
+      let ks = 104; ctx.font = '900 ' + ks + 'px ' + FONTS.bold;
+      while (ctx.measureText(key).width > W * 0.88 && ks > 46) { ks -= 6; ctx.font = '900 ' + ks + 'px ' + FONTS.bold; }
+      const small = 40, gap = 6;
+      ctx.textAlign = 'center';
+      ctx.font = 'italic 500 ' + small + 'px ' + FONTS.serif; ctx.shadowBlur = 14;
+      const preL = pre ? wrap(ctx, pre, W * 0.8).slice(-2) : [], postL = post ? wrap(ctx, post, W * 0.8).slice(0, 1) : [];
+      const total = preL.length * small * 1.15 + ks + postL.length * small * 1.15 + gap * 2;
+      let cy = y - total / 2;
+      ctx.fillStyle = '#FFFFFF';
+      preL.forEach((l) => { ctx.fillText(l, W / 2, cy + small * 0.58); cy += small * 1.15; });
+      cy += gap;
+      if (shown) {
+        const t0 = timed ? toks[ki].s : -1, p = timed ? clamp((tAbs - t0) / 0.16, 0, 1) : 1;
+        ctx.save(); ctx.translate(W / 2, cy + ks / 2); const z = 1.25 - 0.25 * p; ctx.scale(z, z);
+        ctx.globalAlpha = 0.25 + 0.75 * p;
+        if (p < 1 && 'filter' in ctx) ctx.filter = 'blur(' + ((1 - p) * 6).toFixed(1) + 'px)';
+        ctx.font = '900 ' + ks + 'px ' + FONTS.bold; ctx.shadowBlur = 22; ctx.shadowOffsetY = 4;
+        ctx.fillStyle = hl; ctx.fillText(key, 0, 0); ctx.restore();
+      }
+      cy += ks + gap;
+      ctx.font = 'italic 500 ' + small + 'px ' + FONTS.serif; ctx.fillStyle = '#FFFFFF';
+      postL.forEach((l) => { ctx.fillText(l, W / 2, cy + small * 0.58); cy += small * 1.15; });
+      return;
+    }
+    // Podcast et Tuto : une ligne riche, mot par mot, avec retour à la ligne.
+    const tuto = st.template === 'tuto';
+    const size = tuto ? 40 : 36;
+    const fNorm = tuto ? '800 ' + size + 'px ' + FONTS.bold : '500 ' + size + 'px ' + FONTS.body;
+    const fKey = tuto ? '900 ' + size + 'px ' + FONTS.bold : '800 ' + (size + 2) + 'px ' + FONTS.body;
+    const txt = toks.map((x) => (tuto ? x.t.toUpperCase() : x.t));
+    ctx.font = fNorm; const sp = ctx.measureText(' ').width;
+    const widths = txt.map((t, i) => { ctx.font = i === ki ? fKey : fNorm; return ctx.measureText(t).width; });
+    const rows = [[]], rw = [0], maxW = W * 0.84;
+    widths.forEach((w, i) => { const r = rows.length - 1, need = rw[r] + (rows[r].length ? sp : 0) + w; if (need > maxW && rows[r].length) { rows.push([i]); rw.push(w); } else { rows[r].push(i); rw[r] = need; } });
+    const lh = size * 1.32, top = y - (rows.length * lh) / 2;
+    ctx.textAlign = 'left'; ctx.shadowBlur = tuto ? 10 : 12;
+    rows.slice(0, 3).forEach((r, ri) => {
+      let x = (W - rw[ri]) / 2; const cy = top + lh * ri + lh / 2;
+      r.forEach((i) => {
+        ctx.font = i === ki ? fKey : fNorm;
+        if (tuto) { ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(txt[i], x, cy); }
+        ctx.fillStyle = i === ki && tuto ? (brand.highlight || '#FF8A1F') : '#FFFFFF';
+        ctx.globalAlpha = said(i) || !tuto ? 1 : 0.55;
+        ctx.fillText(txt[i], x, cy);
+        x += widths[i] + sp;
+      });
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawCaptions(ctx, groups, st, tAbs, brand, kw) {
     const g = groups.find((x) => tAbs >= x.start - 0.05 && tAbs < x.until);
     if (!g) return;
     const edited = st.edits && st.edits[g.key] != null ? String(st.edits[g.key]) : null;
     const y = st.capY * H;
     ctx.save(); ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    if (KEY_TPL[st.template]) { drawKeyCaptions(ctx, g, edited, st, tAbs, brand, y, kw); ctx.restore(); return; }
     if (st.template === 'dynamique') {
       const tokens = edited != null ? edited.split(/\s+/).filter(Boolean).map((w) => [w, -1, -1]) : g.words;
       let size = 60;
@@ -250,6 +407,15 @@
     }
   }
 
+  // Mots-clés : zoom « punch » qui change à chaque coupe du montage (ou toutes les deux phrases s'il n'y a pas de coupe).
+  const ZOOMS = [1, 1.14, 1.06, 1.18];
+  function punchZoom(clip, groups, t) {
+    const P = clip._pieces;
+    let k = P && P.length > 1 ? P.findIndex((q) => t >= q[0] - 0.02 && t <= q[1] + 0.02) : -1;
+    if (k < 0) k = groups ? Math.floor(groups.filter((g) => g.start <= t).length / 2) : 0;
+    return ZOOMS[Math.max(0, k) % ZOOMS.length];
+  }
+
   /** Dessine une image complète du clip.
    *  tAbs : temps dans la vidéo source (pour l'image, le cadrage et les sous-titres).
    *  relOut / lenOut : position et durée dans le clip monté (pour le titre et la barre de progression). */
@@ -257,11 +423,16 @@
     const st = clip.style;
     const len = Math.max(0.1, lenOut != null ? lenOut : clip.end - clip.start);
     const rel = clamp(relOut != null ? relOut : tAbs - clip.start, 0, len);
+    const b = brand || {}, kw = kwSet(clip);
     ctx.save();
-    drawVideo(ctx, src, sw, sh, st, tAbs);
-    if (st.captions && groups) drawCaptions(ctx, groups, st, tAbs, brand || {});
-    if (st.template === 'citation') drawQuote(ctx, clip, st, rel, len); else drawHook(ctx, clip, st, rel, len);
-    drawBrand(ctx, brand || {}, rel / len);
+    const intro = st.template === 'podcast' && podcastIntro(st, rel, len, sw, sh);
+    if (intro) drawPodcastIntro(ctx, src, sw, sh, clip, st, rel, len);
+    else drawVideo(ctx, src, sw, sh, st, tAbs, st.template === 'punch' ? punchZoom(clip, groups, tAbs) : 1);
+    if (st.captions && groups) drawCaptions(ctx, groups, st, tAbs, b, kw);
+    if (st.template === 'citation') drawQuote(ctx, clip, st, rel, len);
+    else if (st.template === 'punch' || st.template === 'tuto') drawBigTitle(ctx, clip, st, rel, len, b, st.template === 'tuto');
+    else if (st.template !== 'podcast') drawHook(ctx, clip, st, rel, len);
+    drawBrand(ctx, b, rel / len);
     ctx.restore();
   }
 
@@ -357,5 +528,5 @@
     return '';
   }
 
-  window.CMRender = { W, H, TEMPLATES, defaultStyle, buildGroups, draw, analyzeFraming, detector, pickMime, trackAt };
+  window.CMRender = { W, H, TEMPLATES, defaultStyle, buildGroups, draw, analyzeFraming, detector, pickMime, trackAt, keyIndex };
 })();

@@ -11,7 +11,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Montserrat:wght@900&family=Roboto+Condensed:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Montserrat:wght@900&family=Roboto+Condensed:wght@400;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="stylesheet" href="assets/site.css">
 <style>
@@ -115,7 +115,8 @@
 .tpl .nm { font-weight: 700; font-size: 15px; }
 .tpl .nm span { display: block; color: var(--muted); font-weight: 400; font-size: 13px; }
 @media (max-width: 520px) { .tpls .pm { border-radius: 16px; box-shadow: 0 0 0 4px #0B0F17, 0 18px 30px -18px rgba(8, 30, 70, .6); } .tpls .pm .qt span { font-size: 8.5px; } .tpls .pm .cap { font-size: 10px; }
-  .tpls .pm .hook span { font-size: 8.5px; } .tpls .pm .sob { font-size: 8.5px; } .tpls .pm .tv { font-size: 6px; } .tpl .nm span { display: none; } }
+  .tpls .pm .hook span { font-size: 8.5px; } .tpls .pm .sob { font-size: 8.5px; } .tpls .pm .tv { font-size: 6px; } .tpl .nm span { display: none; }
+  .tpls .pm .kw i { font-size: 8px; } .tpls .pm .kw b { font-size: 13px; } .tpls .pm .bigt { font-size: 11px; } .tpls .pm.pod .pt { font-size: 7.5px; } .tpls .pm.pod .pc { font-size: 7px; } }
 
 /* Cas d'usage */
 .uses { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 14px; margin-top: 40px; width: 100%; text-align: left; }
@@ -242,7 +243,7 @@
       <div class="stat rv"><b><span data-count="12">12</span></b><span>clips proposés pour une vidéo de 30 min</span></div>
       <div class="stat rv" style="--d:.08s"><b>≈ <span data-count="3">3</span> min</b><span>pour analyser 30 min de vidéo</span></div>
       <div class="stat rv" style="--d:.16s"><b><span data-count="100" data-suffix=" %">100 %</span></b><span>depuis ton téléphone, sans logiciel</span></div>
-      <div class="stat rv" style="--d:.24s"><b><span data-count="3">3</span></b><span>gabarits : Citation, Sous-titres animés, Sobre</span></div>
+      <div class="stat rv" style="--d:.24s"><b><span data-count="6">6</span></b><span>gabarits : Citation, Mots-clés, Podcast, Tuto…</span></div>
     </div>
   </section>
 
@@ -292,17 +293,18 @@
 
   <section class="s center">
     <div class="sh rv"><span class="eyebrow">Gabarits</span><h2>Le style des grandes chaînes,<br>en un geste</h2>
-      <p>Choisis un gabarit, ajoute ton logo et ta couleur : tous tes clips ont la même identité.</p></div>
+      <p>Six gabarits inspirés des formats qui marchent sur TikTok et Reels. Ajoute ton logo et ta couleur : tous tes clips ont la même identité.</p></div>
     <div class="tpls">
       <div class="tpl rv"><div class="pm" aria-hidden="true"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="tv">TA CHAÎNE</span>
         <div class="qt"><span>« On m'a dit non</span><span>30 fois avant</span><span>le premier oui »</span><small>Épisode 12 · Entreprendre</small></div></div>
         <span class="nm">Citation<span>Bandes blanches façon télé</span></span></div>
-      <div class="tpl rv" style="--d:.1s"><div class="pm" aria-hidden="true" style="--pm1:#2E4B6B;--pm2:#14202F;--pmt:#E2574C"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><span class="logo-b"></span>
-        <div class="hook"><span>LA RÈGLE DES 30 JOURS</span></div><div class="cap" data-karaoke="FAIS DIX POMPES|CHAQUE MATIN|PENDANT UN MOIS">FAIS <b>DIX</b> POMPES</div></div>
-        <span class="nm">Sous-titres animés<span>Mot par mot, très dynamique</span></span></div>
-      <div class="tpl rv" style="--d:.2s"><div class="pm" aria-hidden="true" style="--pm1:#5B5A3E;--pm2:#23231A;--pmt:#3D6B8F"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div>
-        <div class="sob">Une fraction, c'est juste un partage équitable.</div></div>
-        <span class="nm">Sobre<span>Discret, pour les cours</span></span></div>
+      <div class="tpl rv" style="--d:.1s"><div class="pm" aria-hidden="true" style="--pm1:#2E4B6B;--pm2:#14202F;--pmt:#5C6B7A"><div class="zoom"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div></div>
+        <div class="bigt">Le secret <em>des 30 jours</em></div><div class="kw"><i>c'est juste la</i><b>RÉGULARITÉ</b></div></div>
+        <span class="nm">Mots-clés<span>Gros mot en couleur, zooms</span></span></div>
+      <div class="tpl rv" style="--d:.2s"><div class="pm pod" aria-hidden="true"><div class="pt">« Ce conseil a changé ma façon de travailler »</div>
+        <div class="f16"><div class="ppl"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div><div class="ppl two"><i class="b"></i><i class="t"></i><i class="n"></i><i class="h"></i><i class="c"></i></div></div>
+        <div class="pc">et là j'ai compris que <b>tout</b> change</div></div>
+        <span class="nm">Podcast<span>Plan large, puis plein écran</span></span></div>
     </div>
     <a class="link-arrow rv" href="fonctionnalites.html" style="margin-top:30px">Voir toutes les fonctionnalités →</a>
   </section>

@@ -543,7 +543,9 @@
   function tplFields() {
     const t = cur().style.template;
     $('#f-context').hidden = t !== 'citation';
-    $('#f-hook').hidden = t === 'citation';
+    $('#f-hook').hidden = t === 'citation' || t === 'podcast';
+    $('#f-kw').hidden = !(t === 'punch' || t === 'podcast' || t === 'tuto');
+    $('#in-kw').value = (cur().keywords || []).join(', ');
     $('#f-title').querySelector('.lbl').textContent = t === 'citation' ? 'Titre-citation' : 'Titre (si pas d\'accroche)';
   }
   function frameFields() {
@@ -595,10 +597,11 @@
 
   const bindText = (id, key) => $(id).addEventListener('input', (e) => { cur()[key] = e.target.value; S.dirty = true; scheduleSave(); });
   bindText('#in-title', 'title'); bindText('#in-context', 'context'); bindText('#in-hook', 'hook');
+  $('#in-kw').addEventListener('input', (e) => { cur().keywords = e.target.value.split(',').map((x) => x.trim()).filter(Boolean).slice(0, 12); S.dirty = true; scheduleSave(); });
   $$('input[name=tpl]').forEach((r) => r.addEventListener('change', () => {
     const st = cur().style; st.template = r.value;
     st.captions = r.value !== 'citation';
-    if (r.value !== 'citation' && st.titleSec > 8) st.titleSec = 3;
+    if (r.value !== 'citation' && st.titleSec > 8) st.titleSec = r.value === 'podcast' ? 5 : 3;
     if (r.value === 'citation' && st.titleSec < 8 && st.titleSec !== 0) st.titleSec = 14;
     $('#in-titlesec').value = String(st.titleSec); $('#in-caps').checked = st.captions;
     tplFields(); regroup(); scheduleSave();
@@ -840,7 +843,7 @@
 
   /* ---------------- Démarrage ---------------- */
   if (document.fonts && document.fonts.load) {
-    Promise.all(['900 60px Montserrat', '800 40px Montserrat', '700 46px "Roboto Condensed"', '400 26px "Roboto Condensed"', '600 40px Onest']
+    Promise.all(['900 60px Montserrat', '800 40px Montserrat', '700 46px "Roboto Condensed"', '400 26px "Roboto Condensed"', '600 40px Onest', '500 36px Onest', '800 38px Onest', 'italic 500 40px "Playfair Display"']
       .map((f) => document.fonts.load(f).catch(() => {}))).then(() => { S.dirty = true; });
   }
   window.addEventListener('beforeunload', (e) => { if (S.analyzing || S.exporting) { e.preventDefault(); e.returnValue = ''; } });

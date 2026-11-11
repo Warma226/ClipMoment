@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Montserrat:wght@800;900&family=Roboto+Condensed:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Montserrat:wght@800;900&family=Roboto+Condensed:wght@400;700&family=Playfair+Display:ital,wght@1,500&display=swap">
 <link rel="stylesheet" href="assets/style.css">
 <style>
 main { padding-block: 22px 60px; }
@@ -212,7 +212,7 @@ a.pack:hover { border-color: var(--accent); }
           <label class="field"><span class="lbl">Nombre de clips</span>
             <select id="opt-count"><option value="0">Automatique</option><option value="3">3</option><option value="5">5</option><option value="8">8</option><option value="12">12</option></select></label>
           <label class="field"><span class="lbl">Gabarit par défaut</span>
-            <select id="opt-tpl"><option value="citation">Citation (titre façon chaîne TV)</option><option value="dynamique">Sous-titres animés</option><option value="sobre">Sobre</option></select></label>
+            <select id="opt-tpl"><option value="citation">Citation (titre façon chaîne TV)</option><option value="dynamique">Sous-titres animés</option><option value="sobre">Sobre</option><option value="punch">Mots-clés (gros mot en couleur, zooms)</option><option value="podcast">Podcast (plan large puis plein écran)</option><option value="tuto">Tuto (consignes en majuscules)</option></select></label>
         </div>
         <div class="cost"><b id="cost">0 crédit</b><span class="muted small" id="cost-note"></span></div>
         <div class="alert err" id="home-err" hidden></div>
@@ -297,11 +297,15 @@ a.pack:hover { border-color: var(--accent); }
               <label><input type="radio" name="tpl" id="tpl-citation" value="citation"><span><b>Citation</b><small>Bandes blanches, façon chaîne TV</small></span></label>
               <label><input type="radio" name="tpl" id="tpl-dynamique" value="dynamique"><span><b>Animé</b><small>Mot par mot, mot actif en couleur</small></span></label>
               <label><input type="radio" name="tpl" id="tpl-sobre" value="sobre"><span><b>Sobre</b><small>Sous-titres blancs discrets</small></span></label>
+              <label><input type="radio" name="tpl" id="tpl-punch" value="punch"><span><b>Mots-clés</b><small>Gros mot en couleur, zoom à chaque coupe</small></span></label>
+              <label><input type="radio" name="tpl" id="tpl-podcast" value="podcast"><span><b>Podcast</b><small>Titre + plan large, puis plein écran</small></span></label>
+              <label><input type="radio" name="tpl" id="tpl-tuto" value="tuto"><span><b>Tuto</b><small>Majuscules, un mot en couleur</small></span></label>
             </div>
           </div>
           <label class="field" id="f-title"><span class="lbl">Titre-citation</span><input type="text" id="in-title" maxlength="120"></label>
           <label class="field" id="f-context"><span class="lbl">Ligne de contexte</span><input type="text" id="in-context" maxlength="90"></label>
           <label class="field" id="f-hook" hidden><span class="lbl">Accroche en haut</span><input type="text" id="in-hook" maxlength="60"></label>
+          <label class="field" id="f-kw" hidden><span class="lbl">Mots à mettre en avant (séparés par des virgules)</span><input type="text" id="in-kw" maxlength="200" placeholder="Ex. : secret, 30 jours, régularité"></label>
           <label class="field"><span class="lbl">Affichage du titre</span>
             <select id="in-titlesec"><option value="3">3 premières secondes</option><option value="5">5 premières secondes</option><option value="8">8 premières secondes</option>
               <option value="14">14 premières secondes</option><option value="0">Pendant tout le clip</option></select></label>

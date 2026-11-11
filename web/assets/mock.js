@@ -171,7 +171,7 @@
             const mid = Math.max(i + 1, Math.floor((i + k) / 2));
             const segments = mid < k ? [[s, segs[mid - 1][1]], [segs[mid + 1] ? segs[mid + 1][0] : segs[mid][0], e]] : [[s, e]];
             out.push({ start: s, end: e, segments, title: '« ' + segs[i][2].replace(key, key.toUpperCase()) + ' »',
-              context: 'Extrait de la vidéo (mode démo)', hook: words.slice(0, 4).join(' ').toUpperCase(),
+              context: 'Extrait de la vidéo (mode démo)', hook: words.slice(0, 4).join(' ').toUpperCase(), keywords: [key.replace(/^[a-zà-ÿ]{1,2}['’]/i, '').replace(/[^\p{L}\p{N}]/gu, '')],
               score: 92 - out.length * 9 - (i % 4), reason: 'Phrase d\'accroche forte et idée complète (exemple du mode démo).' });
           }
           i = k + 2;

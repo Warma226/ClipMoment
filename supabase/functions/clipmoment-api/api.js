@@ -232,13 +232,14 @@ Pour chaque clip, écris :
 - "title" : un titre-citation dans la langue de la vidéo, comme le post d'une chaîne de télé sur les réseaux. Reprends une phrase forte réellement prononcée, entre guillemets « », avec 1 ou 2 mots-clés en MAJUSCULES. 90 caractères maximum.
 - "context" : une ligne de contexte courte (70 caractères maximum), par exemple « Le coup de gueule de … ». Ne cite un nom que s'il apparaît dans la transcription.
 - "hook" : une accroche très courte de 3 à 6 mots pour le haut de l'écran.
+- "keywords" : 3 à 8 mots réellement prononcés dans le clip, à mettre en avant dans les sous-titres (chiffres, montants, noms, mots forts ou émotionnels). Un ou deux mots chacun, tels qu'ils sont dits.
 - "score" : de 0 à 100, ton estimation du potentiel viral.
 - "reason" : une phrase en français qui explique pourquoi ce passage peut marcher.
 
 Règles strictes :
 - Les horodatages viennent de la transcription fournie.
 - Deux clips différents ne réutilisent pas les mêmes morceaux.
-- Réponds uniquement avec un objet JSON : {"clips":[{"segments":[{"start":0,"end":0}],"title":"","context":"","hook":"","score":0,"reason":""}]}`;
+- Réponds uniquement avec un objet JSON : {"clips":[{"segments":[{"start":0,"end":0}],"title":"","context":"","hook":"","keywords":[""],"score":0,"reason":""}]}`;
 
 async function moments(request, env, user, cors) {
   const b = await readJson(request);
@@ -337,6 +338,7 @@ function parseClips(content, first, last, min, max) {
       title: String(c.title || '').slice(0, 120),
       context: String(c.context || '').slice(0, 90),
       hook: String(c.hook || '').slice(0, 60),
+      keywords: (Array.isArray(c.keywords) ? c.keywords : []).map((k) => String(k || '').trim().slice(0, 30)).filter(Boolean).slice(0, 10),
       score: Math.round(clampNum(c.score, 0, 100, 50)),
       reason: String(c.reason || '').slice(0, 220),
     });
