@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tarifs — ClipMoment</title>
 <meta name="description" content="Des packs de minutes simples, payables par Orange Money ou Wave. Toutes les fonctions dans chaque pack.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ClipMoment">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1B74E8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +34,13 @@ main { padding-block: 40px 70px; overflow-x: clip; }
 
 .plans { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 44px; align-items: stretch; }
 @media (min-width: 900px) { .plans { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } .plan.top { transform: translateY(-8px); } }
+@media (min-width: 640px) { .plans.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1180px) { .plans.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } .plans.n4 .plan { padding: 24px 20px; } .plans.n4 .plan .price b { font-size: 34px; } }
+.plan.year { border: 2px solid #12A06A; }
+.plan.year .ic { background: #E3F7EE; color: #0E8A5A; }
+.badge.green { background: #12A06A; color: #fff; }
+.plan .save { align-self: flex-start; margin-top: 6px; font: 700 12.5px var(--body); color: #0E8A5A; background: #E3F7EE; padding: 4px 9px; border-radius: 999px; }
+@media (prefers-color-scheme: dark) { .plan.year .ic, .plan .save { background: rgba(18, 160, 106, .18); color: #5FE0A8; } }
 .plan { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 26px 24px; display: flex; flex-direction: column; gap: 6px;
   box-shadow: 0 2px 10px rgba(14, 26, 43, .05); }
 .plan .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--sunk); color: var(--ink); margin-bottom: 14px; }
@@ -137,14 +151,17 @@ main { padding-block: 40px 70px; overflow-x: clip; }
   ];
   const CHECK = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7.5"/><path d="M6.8 10.2l2.2 2.2 4.2-4.6"/></svg>';
   const SCREEN = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="3.5" width="15" height="10" rx="1.5"/><path d="M7 17h6M10 13.5V17"/></svg>';
-  const NAMES = [['Découverte', 'Pour essayer sur quelques vidéos'], ['Créateur', 'Pour publier chaque semaine'], ['Pro', 'Pour les médias et les agences']];
+  const NAMES = [['Découverte', 'Pour essayer sur quelques vidéos'], ['Créateur', 'Pour publier chaque semaine'], ['Pro', 'Pour les médias et les agences'], ['Annuel', 'Toute l\'année au meilleur prix']];
+  ICONS.push('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14l2.5 2.5L16 13"/></svg>');
   const num = (p) => { const d = String(p || '').replace(/[^\d]/g, ''); return d ? Number(d) : 0; };
   const money = (n) => n.toLocaleString('fr-FR').replace(/ | /g, ' ') + ' F';
 
   const [s, session] = await Promise.all([CM.loadSettings(), CM.auth.session().catch(() => null)]);
   if (session) document.querySelectorAll('.site-h .login').forEach((a) => { a.textContent = 'Mon studio'; });
-  const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }];
+  const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }, { credits: 360, price: '10 000 F', period: 'an', name: 'Annuel', tagline: 'Toute l\'année au meilleur prix' }];
   const top = packs.length >= 3 ? 1 : packs.length - 1;
+  // Prix mensuel de référence (le premier pack au mois) pour afficher l'économie de l'offre à l'année.
+  const monthly = packs.find((q) => q.period === 'mois' && num(q.price));
   const fee = s.link_fee != null ? Number(s.link_fee) : 5;
   const pay = s.payment || {};
   const w = Number(s.welcome_credits) || 0;
@@ -157,9 +174,11 @@ main { padding-block: 40px 70px; overflow-x: clip; }
     const tl = p.tagline || (NAMES[i] || NAMES[NAMES.length - 1])[1];
     const per = num(p.price) && p.credits ? Math.round(num(p.price) / p.credits) : 0;
     const clips = Math.max(1, Math.round(p.credits / 2.5));
-    const card = el('article', { class: 'plan' + (i === top ? ' top' : ''), id: 'pack-' + i });
+    const year = p.period === 'an';
+    const card = el('article', { class: 'plan' + (i === top ? ' top' : '') + (year && i !== top ? ' year' : ''), id: 'pack-' + i });
     if (i === top) card.appendChild(el('span', { class: 'badge', text: 'Le plus choisi' }));
-    const ic = el('span', { class: 'ic', 'aria-hidden': 'true' }); ic.innerHTML = ICONS[Math.min(i, 2)];
+    else if (year) card.appendChild(el('span', { class: 'badge green', text: 'Meilleur prix' }));
+    const ic = el('span', { class: 'ic', 'aria-hidden': 'true' }); ic.innerHTML = ICONS[year ? 3 : Math.min(i, 2)];
     card.appendChild(ic);
     card.appendChild(el('h2', { text: nm }));
     card.appendChild(el('span', { class: 'tag2', text: tl }));
@@ -167,9 +186,10 @@ main { padding-block: 40px 70px; overflow-x: clip; }
     if (p.period) pr.appendChild(el('small', { text: '/ ' + p.period }));
     if (p.old_price) pr.appendChild(el('s', { text: p.old_price, 'aria-label': 'au lieu de ' + p.old_price }));
     card.appendChild(pr);
-    card.appendChild(el('span', { class: 'per', text: per ? '≈ ' + per + ' F la minute' : '' }));
+    card.appendChild(el('span', { class: 'per', text: per ? '≈ ' + per + ' F la minute' + (year ? ' · ' + money(Math.round(num(p.price) / 12)) + ' par mois' : '') : '' }));
+    if (year && monthly && num(monthly.price) * 12 > num(p.price)) card.appendChild(el('span', { class: 'save', text: 'Soit ' + money(num(monthly.price) * 12 - num(p.price)) + ' d\'économie sur l\'année' }));
     card.appendChild(el('button', { class: 'btn', type: 'button', text: 'Choisir le pack ' + nm, onclick: () => openPay(p, nm) }));
-    const mins = el('div', { class: 'mins' }); mins.innerHTML = SCREEN; mins.appendChild(document.createTextNode(p.credits + ' minutes de vidéo ' + (p.period ? 'par ' + p.period : 'à analyser')));
+    const mins = el('div', { class: 'mins' }); mins.innerHTML = SCREEN; mins.appendChild(document.createTextNode(year ? p.credits + ' minutes de vidéo pour l\'année' : p.credits + ' minutes de vidéo ' + (p.period ? 'par ' + p.period : 'à analyser')));
     card.appendChild(mins);
     const ul = el('ul');
     [p.period ? 'Environ ' + clips + ' clips par ' + p.period + ', choisis par l\'IA' : 'Environ ' + clips + ' clips proposés par l\'IA', 'Montage, sous-titres animés et logo', 'Import par lien YouTube et Facebook (' + fee + ' crédits)', 'Exports illimités, sans filigrane'].forEach((t) => {
@@ -177,6 +197,7 @@ main { padding-block: 40px 70px; overflow-x: clip; }
     });
     card.appendChild(ul);
     box.appendChild(card);
+    box.classList.toggle('n4', packs.length === 4);
   });
 
   function openPay(p, nm) {

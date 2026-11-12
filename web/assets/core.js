@@ -174,6 +174,50 @@
     }
   }
 
+  /* ---------- Application installable (Android et iPhone) ---------- */
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
+  }
+  let deferredPrompt = null;
+  const ua = navigator.userAgent || '';
+  const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const inAppBrowser = /FBAN|FBAV|Instagram|Line\/|TikTok|musical_ly|Snapchat|WhatsApp/i.test(ua);
+  const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.documentElement.classList.add('can-install'); });
+  window.addEventListener('appinstalled', () => { deferredPrompt = null; document.documentElement.classList.add('is-app'); toast('ClipMoment est installé sur ton téléphone.'); });
+  if (standalone()) document.documentElement.classList.add('is-app');
+
+  function installSheet(kind) {
+    let d = document.getElementById('dlg-install');
+    if (!d) {
+      d = document.createElement('dialog'); d.id = 'dlg-install'; d.setAttribute('aria-labelledby', 'inst-title');
+      d.innerHTML = '<div class="dh"><h2 id="inst-title">Installer ClipMoment</h2><button class="btn ghost small" type="button" data-close>Fermer</button></div><div class="db" id="inst-body"></div>';
+      document.body.appendChild(d);
+      d.querySelector('[data-close]').addEventListener('click', () => d.close());
+      d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
+    }
+    const steps = {
+      ios: ['Ouvre ce site dans <b>Safari</b>.', 'Touche le bouton <b>Partager</b> <span aria-hidden="true">(carré avec une flèche vers le haut)</span>.', 'Choisis <b>« Sur l\'écran d\'accueil »</b>, puis <b>Ajouter</b>.'],
+      inapp: ['Tu es dans le navigateur de Facebook, Instagram, TikTok ou WhatsApp, qui ne permet pas d\'installer d\'application.', 'Touche les <b>trois points</b> en haut à droite, puis <b>« Ouvrir dans le navigateur »</b> (Chrome ou Safari).', 'Reviens sur cette page et touche à nouveau <b>Installer l\'application</b>.'],
+      android: ['Ouvre ce site dans <b>Chrome</b>.', 'Touche les <b>trois points</b> en haut à droite.', 'Choisis <b>« Installer l\'application »</b> ou <b>« Ajouter à l\'écran d\'accueil »</b>.'],
+    }[kind];
+    d.querySelector('#inst-body').innerHTML = '<p class="note">L\'application s\'ouvre en plein écran depuis ton écran d\'accueil, comme une vraie application. Pas besoin de passer par un store, et elle se met à jour toute seule.</p><ol class="steps">' + steps.map((x) => '<li>' + x + '</li>').join('') + '</ol>';
+    d.showModal();
+  }
+  async function install() {
+    if (standalone()) { toast('Tu utilises déjà l\'application.'); return; }
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const r = await deferredPrompt.userChoice.catch(() => null);
+      deferredPrompt = null; document.documentElement.classList.remove('can-install');
+      if (r && r.outcome === 'accepted') return;
+      return;
+    }
+    installSheet(inAppBrowser ? 'inapp' : isIOS ? 'ios' : 'android');
+  }
+  // Tout bouton [data-install] ouvre l'installation.
+  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-install]'); if (b) { e.preventDefault(); install(); } });
+
   window.CM = { config: C, DEMO, auth: backend.auth, db: backend.db, api: backend.api, apiRaw: backend.apiRaw, errMsg, loadSettings, fmtTime, el, toast, copyText,
-    brand: C.BRAND || 'ClipMoment' };
+    brand: C.BRAND || 'ClipMoment', install, isApp: standalone };
 })();

@@ -6,6 +6,12 @@
 <title>ClipMoment — Studio</title>
 <meta name="theme-color" content="#0A111C" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#F3F7FC" media="(prefers-color-scheme: light)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ClipMoment">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -197,6 +203,11 @@ a.pack:hover { border-color: var(--accent); }
 
   <!-- Accueil -->
   <section class="view" id="v-home" hidden>
+    <div class="alert install-only" id="inst-banner" hidden style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span style="flex:1 1 200px">📲 <b>Installe ClipMoment</b> sur ton téléphone : il s'ouvre en plein écran depuis l'écran d'accueil.</span>
+      <button class="btn small primary" type="button" data-install>Installer</button>
+      <button class="btn small ghost" type="button" id="inst-later">Plus tard</button>
+    </div>
     <div class="panel">
       <div class="ph"><h2>Nouvelle vidéo</h2><span class="tag" id="max-tag">30 min max</span></div>
       <div class="seg" role="radiogroup" aria-label="Source de la vidéo" id="src-tabs">

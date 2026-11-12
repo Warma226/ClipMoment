@@ -23,14 +23,15 @@
     '<svg class="m" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h14M3 10h14M3 14h14"/></svg>' +
     '<svg class="x" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div></div>' +
     '<div class="mnav" id="mnav">' + LINKS.map((l) => '<a href="' + l[1] + '"' + cur(l[0]) + '>' + l[2] + '</a>').join('') +
-    '<div class="row"><a class="btn" href="app.html">Connexion</a><a class="btn primary" href="app.html">Essayer gratuitement</a></div></div>';
+    '<div class="row"><a class="btn" href="app.html">Connexion</a><a class="btn primary" href="app.html">Essayer gratuitement</a></div>' +
+    '<button class="btn block install-only" type="button" data-install style="margin-top:10px">📲 Installer l\'application</button></div>';
   body.insertBefore(h, body.firstChild);
   if (!sky) { const sp = document.createElement('div'); sp.className = 'h-space'; h.after(sp); }
   const burger = h.querySelector('.burger');
   const setOpen = (o) => { h.classList.toggle('open', o); burger.setAttribute('aria-expanded', String(o)); burger.setAttribute('aria-label', o ? 'Fermer le menu' : 'Ouvrir le menu'); };
   burger.addEventListener('click', () => setOpen(!h.classList.contains('open')));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
-  h.querySelectorAll('.mnav a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  h.querySelectorAll('.mnav a, .mnav [data-install]').forEach((a) => a.addEventListener('click', () => setOpen(false)));
   if (sky) {
     const onScroll = () => h.classList.toggle('solid', window.scrollY > 24);
     window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
@@ -42,7 +43,7 @@
   f.innerHTML = '<div class="wrap"><div class="cols">' +
     '<div class="about"><a class="logo" href="index.html"><i aria-hidden="true"></i><span>' + esc(brand) + '</span></a>' +
     '<p>Tes vidéos longues transformées en clips verticaux sous-titrés, depuis ton téléphone. Paiement Orange Money ou Wave.</p>' +
-    '<a class="btn primary small" href="app.html">Essayer gratuitement</a></div>' +
+    '<div class="row" style="gap:8px"><a class="btn primary small" href="app.html">Essayer gratuitement</a><button class="btn small install-only" type="button" data-install>📲 Installer l\'application</button></div></div>' +
     '<div><h4>Produit</h4><ul><li><a href="fonctionnalites.html">Fonctionnalités</a></li><li><a href="exemples.html">Exemples</a></li><li><a href="tarifs.html">Tarifs</a></li><li><a href="app.html">Ouvrir le studio</a></li></ul></div>' +
     '<div><h4>Aide</h4><ul><li><a href="index.html#comment">Comment ça marche</a></li><li><a href="index.html#faq">Questions fréquentes</a></li><li><a href="contact.html">Contact</a></li></ul></div>' +
     '<div><h4>Nous écrire</h4><ul id="f-contact"><li><a href="contact.html">Formulaire de contact</a></li></ul></div>' +

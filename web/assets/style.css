@@ -118,3 +118,7 @@ dialog .db { padding: 18px; display: flex; flex-direction: column; gap: 16px; }
 /* Pastille d'étiquette (« Pourquoi ClipMoment », etc.) */
 .eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; background: var(--accent-soft); color: var(--accent);
   font-size: 13px; font-weight: 600; }
+
+/* Installation de l'application */
+.is-app [data-install], .is-app .install-only { display: none !important; }
+#dlg-install .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; }

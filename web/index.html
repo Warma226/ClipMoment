@@ -8,6 +8,12 @@
 <meta property="og:title" content="ClipMoment — Tes vidéos longues en clips viraux">
 <meta property="og:description" content="L'IA trouve les meilleurs passages de tes vidéos et les monte en clips verticaux sous-titrés.">
 <meta name="theme-color" content="#1A6FE0">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ClipMoment">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%229%22 fill=%22%231B74E8%22/%3E%3Cpath d=%22M12 9l11 7-11 7z%22 fill=%22%23fff%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -320,7 +326,8 @@
       <span class="cloud c1" style="top:10%"></span><span class="cloud c2" style="top:50%"></span>
       <h2>Ton prochain clip viral est déjà dans tes vidéos</h2>
       <p id="final-sub">Crée ton compte et analyse ta première vidéo gratuitement.</p>
-      <a class="btn white big" href="app.html">Créer mon compte gratuit</a>
+      <div class="row" style="justify-content:center"><a class="btn white big" href="app.html">Créer mon compte gratuit</a><button class="btn glass big install-only" type="button" data-install>📲 Installer l'application</button></div>
+      <p style="font-size:13.5px">Disponible sur Android et iPhone, directement depuis ce site.</p>
     </div>
   </section>
   </div>
@@ -342,7 +349,7 @@
 })();
 (async function () {
   const s = await CM.loadSettings();
-  const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }];
+  const packs = Array.isArray(s.packs) && s.packs.length ? s.packs : [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }, { credits: 360, price: '10 000 F', period: 'an', name: 'Annuel', tagline: 'Toute l\'année au meilleur prix' }];
   const NAMES = ['Découverte', 'Créateur', 'Pro'];
   const top = packs.length > 1 ? 1 : 0;
   const box = document.getElementById('price');

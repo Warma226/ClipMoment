@@ -11,7 +11,7 @@
     try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.users) return s; } catch (e) {}
     return { users: {}, session: null, projects: [], events: [], settings: {
       welcome_credits: 10, max_minutes: 30,
-      packs: [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }],
+      packs: [{ credits: 30, price: '3 000 F', period: 'mois', name: 'Découverte' }, { credits: 100, price: '7 500 F', period: 'mois', name: 'Créateur' }, { credits: 250, price: '15 000 F', period: 'mois', name: 'Pro' }, { credits: 360, price: '10 000 F', period: 'an', name: 'Annuel', tagline: 'Toute l\'année au meilleur prix' }],
       payment: { instructions: 'Envoie le montant du pack par Orange Money ou Wave, puis envoie la capture et ton adresse e-mail sur WhatsApp. Tes crédits sont ajoutés sous 24 h.',
         orange_money: '+226 00 00 00 00', wave: '+226 00 00 00 00', whatsapp: '+226 00 00 00 00' } } };
   }

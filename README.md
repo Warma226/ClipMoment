@@ -121,6 +121,16 @@ Rappelle à tes clients de n'importer que des vidéos qu'ils ont le droit de ré
 
 ---
 
+## Application Android et iPhone
+
+Le site est une **application installable** (PWA) : manifeste, icônes, service worker (ouverture même sans réseau) et bouton « 📲 Installer l'application » dans le menu, le pied de page, l'accueil et le studio.
+
+- **Android (Chrome)** : le bouton ouvre l'installation directement ; l'appli apparaît dans le tiroir d'applications.
+- **iPhone (Safari)** : le bouton affiche la marche à suivre (Partager → Sur l'écran d'accueil).
+- **Navigateurs de Facebook, Instagram, TikTok, WhatsApp** : le bouton explique comment ouvrir le site dans Chrome ou Safari.
+
+Pour publier **sur le Play Store** plus tard : va sur [pwabuilder.com](https://www.pwabuilder.com), colle l'adresse du site, choisis *Android* et télécharge le paquet (.aab) prêt à envoyer sur la Play Console (compte développeur Google : 25 $ une fois). Pour **l'App Store**, il faut un compte Apple Developer (99 $ par an) et un Mac pour l'envoi.
+
 ## Vendre
 
 - Le client crée un compte : il reçoit des crédits offerts (10 par défaut, réglable).

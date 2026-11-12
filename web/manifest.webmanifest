@@ -1,0 +1,25 @@
+{
+  "id": "/app.html",
+  "name": "ClipMoment — clips verticaux par IA",
+  "short_name": "ClipMoment",
+  "description": "Tes vidéos longues transformées en clips verticaux sous-titrés, avec montage par IA, habillage et musique.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/app.html?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#F3F7FC",
+  "theme_color": "#1B74E8",
+  "categories": ["photo", "productivity", "social"],
+  "icons": [
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Nouvelle vidéo", "short_name": "Nouvelle", "url": "/app.html?source=raccourci", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Tarifs et recharge", "short_name": "Tarifs", "url": "/tarifs.html", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

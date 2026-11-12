@@ -481,6 +481,14 @@
 
   function regroup() { const c = cur(); S.groups = c ? R.buildGroups(clipWords(c), c.start, c.end, c.style.template) : []; renderCapEdit(); S.dirty = true; rebuildSound(); }
 
+  /* ---------------- Bandeau d'installation (une fois refusé, il ne revient pas) ---------------- */
+  (function () {
+    const b = $('#inst-banner'); if (!b) return;
+    let off = false; try { off = localStorage.getItem('cm_inst_off') === '1'; } catch (e) { /* */ }
+    if (!off && !(CM.isApp && CM.isApp()) && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) b.hidden = false;
+    $('#inst-later').addEventListener('click', () => { b.hidden = true; try { localStorage.setItem('cm_inst_off', '1'); } catch (e) { /* */ } });
+  })();
+
   /* ---------------- Sound design ---------------- */
   const Snd = window.CMSound;
   function relOf(c, t) { const k = pieceOf(c, t); return k < 0 ? null : before(c, k) + clamp(t - c._pieces[k][0], 0, c._pieces[k][1] - c._pieces[k][0]); }
