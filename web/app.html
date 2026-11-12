@@ -128,6 +128,26 @@ a.pack:hover { border-color: var(--accent); }
 .parts .ptx b { font: 500 12px var(--mono); color: var(--muted); }
 .parts .ptx span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .parts .btn { min-height: 32px; width: 36px; padding: 0; }
+.ov-add { display: flex; flex-wrap: wrap; gap: 6px; }
+.ov-add .btn { min-height: 34px; padding: 6px 11px; font-size: 13.5px; }
+.ov-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ov-list details { border-radius: 12px; background: var(--sunk); }
+.ov-list summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 8px 10px; }
+.ov-list summary::-webkit-details-marker { display: none; }
+.ov-list summary .t { font: 500 12px var(--mono); color: var(--muted); }
+.ov-list summary .x { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+.ov-list summary .x b { font-weight: 700; margin-right: 6px; }
+.ov-list summary .btn { min-height: 30px; width: 34px; padding: 0; }
+.ov-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 0 10px 12px; }
+.ov-body .wide { grid-column: 1 / -1; }
+.ov-body textarea { min-height: 84px; }
+.grades { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.grades label { position: relative; }
+.grades input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.grades span { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 4px; border-radius: 12px; border: 1px solid var(--line); font-size: 12.5px; font-weight: 600; cursor: pointer; text-align: center; }
+.grades span i { width: 100%; height: 26px; border-radius: 7px; background: var(--sw); }
+.grades input:checked + span { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.grades input:focus-visible + span { outline: 2px solid var(--accent); }
 .logoprev { width: 120px; height: 56px; border-radius: 10px; background: repeating-conic-gradient(var(--sunk) 0 25%, var(--surface) 0 50%) 0 0/14px 14px;
   display: grid; place-items: center; overflow: hidden; border: 1px solid var(--line); }
 .logoprev img { max-width: 100%; max-height: 100%; }
@@ -317,6 +337,38 @@ a.pack:hover { border-color: var(--accent); }
           <label class="check"><input type="checkbox" id="mt-silence"> Supprimer les silences</label>
           <label class="check"><input type="checkbox" id="mt-fillers"> Supprimer les hésitations (euh, hum, ben…)</label>
           <div class="stack" style="gap:6px"><span class="lbl">Passages raccordés, dans l'ordre du clip</span><ol class="parts" id="mt-parts"></ol></div>
+        </div>
+
+        <div class="panel" id="p-ov">
+          <div class="ph"><h2>Habillage</h2><span class="tag mono" id="ov-count">0</span></div>
+          <p class="note">Cartes animées posées sur la vidéo au bon moment : chiffres, listes, mots forts, emojis, alertes, ou tes propres images. L'IA en propose ; les boutons ajoutent un élément à l'endroit de la lecture.</p>
+          <div class="ov-add">
+            <button class="btn small" type="button" data-ov="chiffre">+ Chiffre</button>
+            <button class="btn small" type="button" data-ov="liste">+ Liste</button>
+            <button class="btn small" type="button" data-ov="mot">+ Mot fort</button>
+            <button class="btn small" type="button" data-ov="texte">+ Texte</button>
+            <button class="btn small" type="button" data-ov="alerte">+ Alerte</button>
+            <button class="btn small" type="button" data-ov="emoji">+ Emoji</button>
+            <button class="btn small" type="button" id="ov-img-btn">+ Image</button>
+            <input type="file" id="ov-img" accept="image/*" hidden>
+          </div>
+          <ul class="ov-list" id="ov-list"></ul>
+          <button class="btn small ghost" type="button" id="ov-auto" style="align-self:flex-start">✨ Proposer un habillage automatique</button>
+        </div>
+
+        <div class="panel" id="p-grade">
+          <div class="ph"><h2>Étalonnage</h2></div>
+          <div class="grades" role="radiogroup" aria-label="Filtre d'étalonnage">
+            <label><input type="radio" name="grade" id="gr-aucun" value="aucun"><span><i style="--sw:linear-gradient(135deg,#9aa6b2,#d9dee4)"></i>Aucun</span></label>
+            <label><input type="radio" name="grade" id="gr-cine" value="cine"><span><i style="--sw:linear-gradient(135deg,#0f4c5c,#e36414)"></i>Ciné</span></label>
+            <label><input type="radio" name="grade" id="gr-chaud" value="chaud"><span><i style="--sw:linear-gradient(135deg,#b5651d,#ffcf87)"></i>Chaud</span></label>
+            <label><input type="radio" name="grade" id="gr-froid" value="froid"><span><i style="--sw:linear-gradient(135deg,#1d3d6e,#9fd0ff)"></i>Froid</span></label>
+            <label><input type="radio" name="grade" id="gr-vif" value="vif"><span><i style="--sw:linear-gradient(135deg,#e5006a,#ffd400,#00b3ff)"></i>Vif</span></label>
+            <label><input type="radio" name="grade" id="gr-doux" value="doux"><span><i style="--sw:linear-gradient(135deg,#e9d7c9,#fff4ea)"></i>Doux</span></label>
+            <label><input type="radio" name="grade" id="gr-nb" value="nb"><span><i style="--sw:linear-gradient(135deg,#111,#eee)"></i>N&amp;B</span></label>
+            <label><input type="radio" name="grade" id="gr-nuit" value="nuit"><span><i style="--sw:linear-gradient(135deg,#050b1f,#2c4a8a)"></i>Nuit</span></label>
+          </div>
+          <label class="field" id="f-gr-amt"><span class="lbl">Intensité</span><input type="range" id="gr-amt" min="10" max="100" value="70"></label>
         </div>
 
         <div class="panel" id="p-sound">

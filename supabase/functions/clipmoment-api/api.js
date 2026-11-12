@@ -240,13 +240,21 @@ Pour chaque clip, écris :
 - "context" : une ligne de contexte courte (70 caractères maximum), par exemple « Le coup de gueule de … ». Ne cite un nom que s'il apparaît dans la transcription.
 - "hook" : une accroche très courte de 3 à 6 mots pour le haut de l'écran.
 - "keywords" : 3 à 8 mots réellement prononcés dans le clip, à mettre en avant dans les sous-titres (chiffres, montants, noms, mots forts ou émotionnels). Un ou deux mots chacun, tels qu'ils sont dits.
+- "overlays" : l'habillage du clip, 2 à 5 cartes animées affichées au moment exact où l'idée est dite. Chacune : {"at": secondes, "type": …, "title": "", "text": "", "items": [], "emoji": ""}. Types :
+  « chiffre » quand un nombre, un montant ou un pourcentage est prononcé (text = la valeur, ex. « 2 000 000 F » ; title = ce qu'elle représente, court) ;
+  « liste » quand l'orateur énumère des conseils ou des étapes (title court, items = 2 à 4 points de 4 à 6 mots) ;
+  « mot » pour une idée forte en 1 à 3 mots (text) ;
+  « alerte » pour un avertissement ou un piège (title + text courts, emoji) ;
+  « emoji » pour une émotion ou un objet facile à illustrer (emoji + title facultatif) ;
+  « texte » pour une phrase à retenir (title + text de 12 mots au plus).
+  Textes courts, dans la langue de la vidéo, fidèles à ce qui est dit. Espace les cartes d'au moins 5 secondes.
 - "score" : de 0 à 100, ton estimation du potentiel viral.
 - "reason" : une phrase en français qui explique pourquoi ce passage peut marcher.
 
 Règles strictes :
 - Les horodatages viennent de la transcription fournie.
 - Deux clips différents ne réutilisent pas les mêmes morceaux.
-- Réponds uniquement avec un objet JSON : {"clips":[{"segments":[{"start":0,"end":0}],"title":"","context":"","hook":"","keywords":[""],"score":0,"reason":""}]}`;
+- Réponds uniquement avec un objet JSON : {"clips":[{"segments":[{"start":0,"end":0}],"title":"","context":"","hook":"","keywords":[""],"overlays":[{"at":0,"type":"chiffre","title":"","text":"","items":[],"emoji":""}],"score":0,"reason":""}]}`;
 
 async function moments(request, env, user, cors) {
   const b = await readJson(request);
@@ -346,11 +354,24 @@ function parseClips(content, first, last, min, max) {
       context: String(c.context || '').slice(0, 90),
       hook: String(c.hook || '').slice(0, 60),
       keywords: (Array.isArray(c.keywords) ? c.keywords : []).map((k) => String(k || '').trim().slice(0, 30)).filter(Boolean).slice(0, 10),
+      overlays: parseOverlays(c.overlays, v.lo, v.hi),
       score: Math.round(clampNum(c.score, 0, 100, 50)),
       reason: String(c.reason || '').slice(0, 220),
     });
   }
   return out.sort((x, y) => y.score - x.score);
+}
+
+const OV_TYPES = ['chiffre', 'liste', 'mot', 'alerte', 'emoji', 'texte'];
+function parseOverlays(list, lo, hi) {
+  if (!Array.isArray(list)) return [];
+  const s = (x, n) => String(x == null ? '' : x).replace(/\s+/g, ' ').trim().slice(0, n);
+  return list.filter((o) => o && OV_TYPES.includes(o.type) && Number.isFinite(Number(o.at)) && Number(o.at) >= lo - 1 && Number(o.at) <= hi + 1)
+    .slice(0, 6).map((o) => ({
+      at: Math.round(Number(o.at) * 10) / 10, type: o.type, title: s(o.title, 40), text: s(o.text, o.type === 'texte' || o.type === 'alerte' ? 120 : 30),
+      items: (Array.isArray(o.items) ? o.items : []).map((x) => s(x, 40)).filter(Boolean).slice(0, 4), emoji: Array.from(s(o.emoji, 16)).slice(0, 4).join(''),
+    }))
+    .filter((o) => o.type === 'emoji' ? !!o.emoji : o.type === 'liste' ? o.items.length >= 2 : !!(o.text || o.title));
 }
 
 /* ---------------- Import par lien (YouTube, Facebook…) via Apify ---------------- */

@@ -357,6 +357,8 @@
         x.parts = (segs.length ? segs : [[c.start, c.end]]).map(([a, b]) => ({ s: a, e: b, on: true }));
         x.id = 'c' + Date.now().toString(36) + i;
         x.style = R.defaultStyle(opts.template);
+        x.overlays = aiOverlays(x, c.overlays); // sinon proposé à l'ouverture de l'éditeur
+        if (!x.overlays) delete x.overlays;
         if (!x.title && opts.template === 'citation') x.style.captions = true;
         return x;
       }).sort((a, b) => b.score - a.score);
@@ -487,7 +489,7 @@
     const speech = clipWords(c).map((w) => { const a = relOf(c, w[1]), b = relOf(c, w[2]); return a == null || b == null ? null : [+a.toFixed(2), +b.toFixed(2)]; }).filter(Boolean);
     const cuts = [];
     c.parts.filter((q) => q.on).forEach((q, i) => { if (!i) return; const k = P.findIndex((x) => x[0] >= q.s - 0.2); if (k > 0) cuts.push(+before(c, k).toFixed(2)); });
-    const pops = R.keyTimes(c, S.groups).map((t) => relOf(c, t)).filter((x) => x != null).map((x) => +x.toFixed(2));
+    const pops = R.keyTimes(c, S.groups).concat((c.overlays || []).map((o) => o.t)).map((t) => relOf(c, t)).filter((x) => x != null).map((x) => +x.toFixed(2)).sort((a, b) => a - b);
     return { len: +c._dur.toFixed(2), music: st.music || 'douce', musicVol: st.musicVol != null ? st.musicVol : 0.5, sfx: st.sfx !== false, speech, cuts, pops, seed: Snd.hash(c.id || c.title || '') };
   }
   let sndTimer = null, sndKey = '', sndJob = Promise.resolve();
@@ -523,6 +525,145 @@
     $('#snd-fx').checked = st.sfx !== false;
   }
   $$('input[name=music]').forEach((r) => r.addEventListener('change', () => { cur().style.music = r.value; renderSound(); rebuildSound(); scheduleSave(); }));
+
+  /* ---------------- Étalonnage ---------------- */
+  function renderGrade() {
+    const st = cur().style, g = st.grade || 'aucun';
+    const r = $('#gr-' + g); if (r) r.checked = true;
+    $('#gr-amt').value = Math.round((st.gradeAmt != null ? st.gradeAmt : 0.7) * 100);
+    $('#f-gr-amt').hidden = g === 'aucun';
+  }
+  $$('input[name=grade]').forEach((r) => r.addEventListener('change', () => { cur().style.grade = r.value; renderGrade(); S.dirty = true; scheduleSave(); }));
+  $('#gr-amt').addEventListener('input', (e) => { cur().style.gradeAmt = e.target.value / 100; S.dirty = true; scheduleSave(); });
+
+  /* ---------------- Habillage ---------------- */
+  const OV_STOP = /^(le|la|les|un|une|des|de|du|d|l|et|à|a|en|pour|par|sur|dans|qui|que|c|est|ce|se|sa|son|ses|il|elle|on|je|tu|nous|vous|ils|elles|y|ne|pas)$/i;
+  const NUM_TAIL = /^(%|pour|cent|pourcent|f|fcfa|cfa|francs?|euros?|€|\$|dollars?|mille|millions?|milliards?|000|k)$/i;
+  const ovNow = (c) => (S.url ? vid.currentTime : c._pieces[0][0]);
+  function visibleT(c, t) {
+    if (pieceOf(c, t) >= 0) return +t.toFixed(2);
+    const n = c._pieces.find((q) => q[0] >= t); return +(n ? n[0] : c._pieces[c._pieces.length - 1][0]).toFixed(2);
+  }
+  const ovId = () => 'o' + Math.random().toString(36).slice(2, 8);
+  const cap1 = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+  // Habillage proposé sans IA : chiffres prononcés (carte chiffre) et mots-clés (mot fort), espacés d'au moins 5 s.
+  function autoOverlays(c) {
+    if (!c._pieces) prep(c);
+    const W = clipWords(c), out = [], start = c._pieces[0][0] + 2.5;
+    const free = (t) => out.every((o) => Math.abs(o.t - t) >= 5);
+    for (let i = 0; i < W.length && out.length < 4; i++) {
+      const w = W[i]; if (!/\d/.test(w[0]) || w[1] < start || !free(w[1])) continue;
+      let j = i, val = [w[0].replace(/[,.;:!?]+$/, '')];
+      while (j + 1 < W.length && (/^\d/.test(W[j + 1][0]) || NUM_TAIL.test(W[j + 1][0].replace(/[,.;:!?]+$/, ''))) && val.length < 5) { j++; val.push(W[j][0].replace(/[,.;:!?]+$/, '')); }
+      const label = [];
+      for (let k = j + 1; k < W.length && label.length < 3; k++) { const x = W[k][0].replace(/[,.;:!?«»"]+/g, ''); if (!x) break; if (label.length || !OV_STOP.test(x)) label.push(x); if (/[.!?]$/.test(W[k][0])) break; }
+      const v = val.join(' ').replace(/\bpour ?cent\b/i, '%').replace(/ %/, ' %');
+      out.push({ id: ovId(), auto: true, type: 'chiffre', t: visibleT(c, w[1]), pos: 'centre', title: cap1(label.join(' ')), text: v });
+      i = j;
+    }
+    if (c.style.template !== 'punch') {
+      (c.keywords || []).slice(0, 4).forEach((k) => {
+        if (out.length >= 4) return;
+        const n = k.toLowerCase().split(/\s+/)[0].replace(/[^\p{L}\p{N}]/gu, '');
+        const w = W.find((x) => x[1] >= start && x[0].toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').endsWith(n) && free(x[1]));
+        if (w && !/\d/.test(k)) out.push({ id: ovId(), auto: true, type: 'mot', t: visibleT(c, w[1]), pos: 'centre', text: k });
+      });
+    }
+    return out.sort((a, b) => a.t - b.t);
+  }
+  // Habillage proposé par l'IA (temps de la vidéo source) : nettoyé et calé sur les morceaux lus.
+  function aiOverlays(c, list) {
+    if (!Array.isArray(list) || !list.length) return undefined;
+    return list.slice(0, 6).map((o) => ({ id: ovId(), auto: true, type: o.type, t: +o.at, pos: 'centre', title: o.title || '', text: o.text || '', items: o.items || [], emoji: o.emoji || '' }));
+  }
+  function ovChanged() { S.dirty = true; scheduleSave(); rebuildSound(); $('#ov-count').textContent = String((cur().overlays || []).length); }
+  function addOverlay(o) {
+    const c = cur(); if (!c) return;
+    c.overlays = (c.overlays || []).concat(Object.assign({ id: ovId(), t: visibleT(c, ovNow(c)), pos: 'centre' }, o)).sort((a, b) => a.t - b.t);
+    renderOverlays(o.id); ovChanged();
+  }
+  const OV_DEFAULT = {
+    chiffre: { title: 'Libellé', text: '100 %' }, liste: { title: 'Les bons réflexes', items: ['Premier point', 'Deuxième point'] },
+    mot: { text: 'Mot fort' }, texte: { title: 'À retenir', text: 'Écris ton texte ici' }, alerte: { title: 'Attention', text: 'Ne partage jamais ton code', emoji: '⚠️' }, emoji: { emoji: '🔥', title: '' },
+  };
+  $$('[data-ov]').forEach((b) => b.addEventListener('click', () => { const t = b.dataset.ov, id = ovId(); addOverlay(Object.assign({ id, type: t }, JSON.parse(JSON.stringify(OV_DEFAULT[t])))); }));
+  $('#ov-img-btn').addEventListener('click', () => $('#ov-img').click());
+  $('#ov-img').addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    if ((cur().overlays || []).filter((o) => o.type === 'image').length >= 6) { toast('6 images au maximum par clip.', 'err'); return; }
+    try { const img = await shrinkImage(f, 720); addOverlay({ id: ovId(), type: 'image', img, title: '', pos: 'centre' }); }
+    catch (err) { toast('Image illisible. Essaie une photo JPG ou PNG.', 'err'); }
+  });
+  // Réduit l'image (720 px au plus) pour qu'elle reste légère dans le projet enregistré.
+  function shrinkImage(file, max) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => {
+        const s = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), w = Math.round(im.naturalWidth * s), h = Math.round(im.naturalHeight * s);
+        const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        const png = /png|gif|webp/.test(file.type) && w * h < 420000;
+        res(c.toDataURL(png ? 'image/png' : 'image/jpeg', 0.82));
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
+      im.src = url;
+    });
+  }
+  $('#ov-auto').addEventListener('click', () => {
+    const c = cur(); if (!c) return;
+    const mine = (c.overlays || []).filter((o) => !o.auto), auto = autoOverlays(c);
+    c.overlays = mine.concat(auto).sort((a, b) => a.t - b.t);
+    renderOverlays(); ovChanged();
+    toast(auto.length ? auto.length + ' élément' + (auto.length > 1 ? 's' : '') + ' d\'habillage proposé' + (auto.length > 1 ? 's' : '') + '.' : 'Aucun chiffre ni mot-clé trouvé : ajoute tes éléments avec les boutons.');
+  });
+  function ovSummary(o) {
+    if (o.type === 'liste') return (o.title || '') + ' · ' + (o.items || []).length + ' points';
+    if (o.type === 'emoji') return (o.emoji || '') + ' ' + (o.title || '');
+    if (o.type === 'image') return o.title || (o.pos === 'plein' ? 'Plein écran' : 'Carte');
+    return [o.title, o.text].filter(Boolean).join(' · ');
+  }
+  function renderOverlays(openId) {
+    const c = cur(), ul = $('#ov-list'); ul.textContent = '';
+    const list = c.overlays || [];
+    $('#ov-count').textContent = String(list.length);
+    list.forEach((o) => {
+      const rel = relOf(c, o.t);
+      const play = el('button', { class: 'btn small ghost', type: 'button', 'aria-label': 'Voir cet élément', text: '▶' });
+      play.addEventListener('click', (e) => { e.preventDefault(); if (!S.url || S.exporting) return; const k = pieceOf(c, o.t); if (k < 0) return; S.pi = k; try { vid.currentTime = Math.max(c._pieces[k][0], o.t - 0.3); } catch (er) { /* */ } ensureAudio(); vid.play().catch(() => {}); });
+      const del = el('button', { class: 'btn small ghost', type: 'button', 'aria-label': 'Supprimer cet élément', text: '✕' });
+      del.addEventListener('click', (e) => { e.preventDefault(); c.overlays = c.overlays.filter((x) => x !== o); renderOverlays(); ovChanged(); });
+      const sum = el('summary', {}, [el('span', { class: 't', text: rel == null ? '—' : fmtTime(rel) }), el('span', { class: 'x' }, [el('b', { text: R.OV_TYPES[o.type] || o.type }), document.createTextNode(ovSummary(o))]), play, del]);
+      const body = el('div', { class: 'ov-body' });
+      const field = (label, input, wide) => { const l = el('label', { class: 'field' + (wide ? ' wide' : '') }, [el('span', { class: 'lbl', text: label }), input]); body.appendChild(l); return input; };
+      const txt = (key, label, max, wide) => { const i = el('input', { type: 'text', maxlength: String(max || 40), value: o[key] || '' }); i.addEventListener('input', () => { o[key] = i.value; sum.querySelector('.x').lastChild.textContent = ovSummary(o); ovChanged(); }); return field(label, i, wide); };
+      if (o.type === 'chiffre') { txt('text', 'Chiffre ou montant', 20); txt('title', 'Libellé au-dessus', 40); }
+      if (o.type === 'texte' || o.type === 'alerte') { txt('title', 'Titre', 40); if (o.type === 'alerte') txt('emoji', 'Emoji', 8); txt('text', 'Texte', 120, true); }
+      if (o.type === 'mot') txt('text', 'Mot ou expression', 24, true);
+      if (o.type === 'emoji') { txt('emoji', 'Emoji', 8); txt('title', 'Légende (facultatif)', 24); }
+      if (o.type === 'image') txt('title', 'Légende (facultatif)', 40, true);
+      if (o.type === 'liste') {
+        txt('title', 'Titre', 40, true);
+        const ta = el('textarea', { maxlength: '200' }); ta.value = (o.items || []).join('\n');
+        ta.addEventListener('input', () => { o.items = ta.value.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 4); sum.querySelector('.x').lastChild.textContent = ovSummary(o); ovChanged(); });
+        field('Points (un par ligne, 4 au plus)', ta, true);
+      }
+      const pos = el('select');
+      [['haut', 'En haut'], ['centre', 'Au centre'], ['bas', 'En bas']].concat(o.type === 'image' ? [['plein', 'Plein écran']] : []).forEach(([v, l]) => { const op = el('option', { value: v, text: l }); if ((o.pos || 'centre') === v) op.selected = true; pos.appendChild(op); });
+      pos.addEventListener('change', () => { o.pos = pos.value; ovChanged(); });
+      field('Position', pos);
+      const dur = el('select');
+      const dd = R.ovDur(Object.assign({}, o, { d: 0 }));
+      [['0', 'Auto (' + dd.toFixed(1).replace('.0', '') + ' s)'], ['2', '2 s'], ['3', '3 s'], ['4', '4 s'], ['5', '5 s'], ['7', '7 s']].forEach(([v, l]) => { const op = el('option', { value: v, text: l }); if (String(o.d || 0) === v) op.selected = true; dur.appendChild(op); });
+      dur.addEventListener('change', () => { o.d = Number(dur.value) || 0; if (!o.d) delete o.d; ovChanged(); });
+      field('Durée', dur);
+      const at = el('button', { class: 'btn small wide', type: 'button', text: 'Placer à l\'endroit de la lecture' });
+      at.addEventListener('click', () => { o.t = visibleT(c, ovNow(c)); c.overlays.sort((a, b) => a.t - b.t); renderOverlays(o.id); ovChanged(); });
+      body.appendChild(at);
+      const d = el('details', {}, [sum, body]); if (o.id === openId) d.open = true;
+      ul.appendChild(el('li', {}, [d]));
+    });
+  }
   $('#snd-vol').addEventListener('input', (e) => { cur().style.musicVol = e.target.value / 100; rebuildSound(); scheduleSave(); });
   $('#snd-fx').addEventListener('change', (e) => { cur().style.sfx = e.target.checked; rebuildSound(); scheduleSave(); });
   function seekPiece(i, off) {
@@ -582,7 +723,9 @@
     $('#fr-' + st.frame).checked = true; $('#in-manual').value = Math.round(st.manualX * 100);
     $('#result').hidden = true;
     tplFields(); frameFields();
-    regroup(); updTrim(); renderMontage(); renderLogoPanel(); renderSound();
+    if (!Array.isArray(c.overlays)) c.overlays = autoOverlays(c);
+    else c.overlays.forEach((o) => { o.t = visibleT(c, o.t); });
+    regroup(); updTrim(); renderMontage(); renderLogoPanel(); renderSound(); renderGrade(); renderOverlays();
     show('editor');
     if (S.url) { vid.pause(); seekPiece(0); }
     else toast('Resélectionne la vidéo d\'origine pour voir l\'aperçu.', 'err');
@@ -748,7 +891,7 @@
   let wake = null;
   function lockUi(on) {
     $('#exp-wrap').hidden = !on; $('#rec').hidden = !on; $('#export').disabled = on || !S.url;
-    $$('[data-trim], #play, #scrub, #ed-back, input[name=tpl], input[name=frame], #mt-silence, #mt-fillers, #mt-parts input, #mt-parts button, input[name=music], #snd-vol, #snd-fx').forEach((n) => { n.disabled = on; });
+    $$('[data-trim], #play, #scrub, #ed-back, input[name=tpl], input[name=frame], #mt-silence, #mt-fillers, #mt-parts input, #mt-parts button, input[name=music], #snd-vol, #snd-fx, input[name=grade], #gr-amt, #p-ov button, #p-ov input, #p-ov select, #p-ov textarea').forEach((n) => { n.disabled = on; });
   }
   async function doExport() {
     const c = cur(); if (!c || !S.url || S.exporting) return;

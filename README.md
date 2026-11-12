@@ -6,6 +6,8 @@ Plateforme qui transforme des vidéos longues (interviews, podcasts, lives, cour
 - **Transcription mot par mot** (Whisper via Groq).
 - **Clips complets de 45 s à 1 min 30**, qui commencent et finissent sur des phrases entières (allongés ou raccourcis automatiquement).
 - **L'IA choisit les moments viraux et fait le montage** : elle raccorde plusieurs passages (accroche, explication, chute), écarte les digressions et répétitions, écrit un titre-citation et donne une note sur 100.
+- **Habillage** : cartes animées proposées par l'IA (chiffre, liste, mot fort, emoji, alerte, texte) au moment où c'est dit, et images ajoutées par l'utilisateur (en carte ou plein écran).
+- **Étalonnage** : 8 filtres de couleur (Ciné, Chaud, Froid, Vif, Doux, Noir et blanc, Nuit) avec intensité.
 - **Sound design** : musique de fond générée pour chaque clip (douce, énergique, suspense), libre de droits, baissée automatiquement sous la voix ; impact d'ouverture, whoosh aux raccords, pop sur les mots-clés, note de fin.
 - **Silences et hésitations supprimés** (« euh », « hum »…) au mot près ; chaque passage peut être retiré ou remis dans l'éditeur.
 - **6 gabarits** : *Citation* (bandes blanches façon chaîne TV), *Sous-titres animés* (mot par mot), *Mots-clés* (petit italique + gros mot en couleur, zoom à chaque coupe), *Podcast* (titre et plan large, puis plein écran sur la personne qui parle), *Tuto* (consignes en majuscules, un mot en couleur), *Sobre*. L'IA choisit les mots à mettre en avant.

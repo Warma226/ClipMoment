@@ -121,7 +121,8 @@ assert.deepEqual(m.clips.map((c) => [c.start, c.end, c.score]), [[20, 50, 99], [
 // moments en plusieurs morceaux raccordés
 groqChatContent = JSON.stringify({ clips: [
   { segments: [{ start: 70, end: 78 }, { start: 10, end: 25 }, { start: 30, end: 45 }], title: '« Raccord »', score: 90 },
-  { segments: [{ start: 12, end: 20 }, { start: 100, end: 130 }], title: 'réutilise un morceau', score: 95, keywords: ['  secret ', 30, '', 'x'.repeat(50)] },
+  { segments: [{ start: 12, end: 20 }, { start: 100, end: 130 }], title: 'réutilise un morceau', score: 95, keywords: ['  secret ', 30, '', 'x'.repeat(50)],
+    overlays: [{ at: 15, type: 'chiffre', title: 'Clients', text: '48' }, { at: 110, type: 'liste', title: 'Réflexes', items: ['a', 'b', 'c', 'd', 'e'] }, { at: 115, type: 'liste', items: ['seul'] }, { at: 500, type: 'mot', text: 'hors clip' }, { at: 16, type: 'video', text: 'x' }] },
   { segments: [{ start: 5, end: 6 }], title: 'trop court', score: 99 },
 ] });
 r = await worker.fetch(req('/moments', { project_id: PID, segments: [[0, 5, 'a'], [5, 140, 'b']], min: 20, max: 60, count: 3 }), env);
@@ -132,6 +133,9 @@ assert.equal(m2.clips.length, 1, 'le clip qui réutilise un morceau déjà pris 
 assert.deepEqual(m2.clips[0].segments, [[12, 20], [100, 130]]);
 assert.deepEqual(m2.clips[0].keywords, ['secret', '30', 'x'.repeat(30)], 'mots-clés nettoyés');
 assert.deepEqual(m.clips[0].keywords, [], 'mots-clés absents : liste vide');
+assert.deepEqual(m.clips[0].overlays, [], 'habillage absent : liste vide');
+assert.deepEqual(m2.clips[0].overlays.map((o) => o.type), ['chiffre', 'liste'], 'habillage nettoyé (types inconnus, hors du clip et listes trop courtes retirés)');
+assert.equal(m2.clips[0].overlays[1].items.length, 4, 'liste limitée à 4 points');
 
 // import par lien
 r = await worker.fetch(req('/link/start', { url: 'https://evil.example.com/v' }), env);

@@ -25,7 +25,7 @@
     return { template: template || 'citation', titleSec: template === 'citation' || !template ? 14 : template === 'podcast' ? 5 : 3,
       captions: !!(TEMPLATES[template || 'citation'] || {}).captions, capY: 0.7, frame: 'auto', manualX: 0.5, track: null, trackV: 2, edits: {},
       cutSilence: true, cutFillers: true,
-      music: MUSIC_FOR[template || 'citation'] || 'douce', musicVol: 0.5, sfx: true };
+      music: MUSIC_FOR[template || 'citation'] || 'douce', musicVol: 0.5, sfx: true, grade: 'aucun', gradeAmt: 0.7 };
   }
   const MUSIC_FOR = { citation: 'douce', dynamique: 'energique', sobre: 'douce', punch: 'energique', podcast: 'douce', tuto: 'energique' };
 
@@ -89,6 +89,144 @@
       const i = keyIndex(g.words.map((w) => w[0]), kw, false);
       return i >= 0 && (kw.has(norm(g.words[i][0])) || /\d/.test(g.words[i][0]) || t === 'punch') ? g.words[i][1] : null;
     }).filter((x) => x != null);
+  }
+
+  /* ---------- Étalonnage : filtres de couleur appliqués à l'image ---------- */
+  // f : filtre CSS du canvas (Chrome, Firefox, Safari récent) ; tint : couleur mélangée en « soft-light » (marche partout) ; vig : vignettage.
+  const GRADES = {
+    aucun: { label: 'Aucun' },
+    cine: { label: 'Ciné', f: (k) => `contrast(${1 + 0.18 * k}) saturate(${1 + 0.12 * k})`, tint: [[0, 128, 128], 0.18], warm: [[255, 140, 60], 0.12], vig: 0.45 },
+    chaud: { label: 'Chaud', f: (k) => `saturate(${1 + 0.15 * k}) sepia(${0.18 * k})`, tint: [[255, 150, 70], 0.2] },
+    froid: { label: 'Froid', f: (k) => `saturate(${1 - 0.1 * k}) brightness(${1 + 0.03 * k})`, tint: [[70, 140, 255], 0.2] },
+    vif: { label: 'Vif', f: (k) => `contrast(${1 + 0.12 * k}) saturate(${1 + 0.45 * k})` },
+    doux: { label: 'Doux', f: (k) => `contrast(${1 - 0.12 * k}) brightness(${1 + 0.06 * k}) saturate(${1 - 0.15 * k})`, tint: [[255, 230, 210], 0.12] },
+    nb: { label: 'Noir et blanc', f: (k) => `grayscale(${k}) contrast(${1 + 0.15 * k})`, gray: true },
+    nuit: { label: 'Nuit', f: (k) => `brightness(${1 - 0.12 * k}) contrast(${1 + 0.15 * k}) saturate(${1 - 0.2 * k})`, tint: [[20, 60, 140], 0.25], vig: 0.6 },
+  };
+  const HAS_FILTER = (() => { try { const c = document.createElement('canvas').getContext('2d'); return c && 'filter' in c; } catch (e) { return false; } })();
+  function gradeFilter(st) { const g = GRADES[st.grade]; return g && g.f && HAS_FILTER ? g.f(st.gradeAmt != null ? st.gradeAmt : 0.7) : 'none'; }
+  function gradeLayers(ctx, st) {
+    const g = GRADES[st.grade]; if (!g || st.grade === 'aucun') return;
+    const k = st.gradeAmt != null ? st.gradeAmt : 0.7;
+    ctx.save();
+    if (g.gray && !HAS_FILTER) { ctx.globalCompositeOperation = 'saturation'; ctx.globalAlpha = k; ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, W, H); }
+    [g.tint, g.warm].forEach((t) => { if (!t) return; ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = t[1] * k * 2; ctx.fillStyle = 'rgb(' + t[0].join(',') + ')'; ctx.fillRect(0, 0, W, H); });
+    if (g.vig) {
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+      const v = ctx.createRadialGradient(W / 2, H * 0.45, H * 0.28, W / 2, H * 0.45, H * 0.75);
+      v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,' + (g.vig * k).toFixed(2) + ')');
+      ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+  }
+
+  /* ---------- Habillage : cartes animées (chiffre, liste, mot, emoji, alerte) et images ---------- */
+  const OV_TYPES = { chiffre: 'Chiffre', liste: 'Liste', mot: 'Mot fort', emoji: 'Emoji', alerte: 'Alerte', texte: 'Texte', image: 'Image' };
+  const imgCache = new Map();
+  function ovImage(o) {
+    if (!o.img) return null;
+    let im = imgCache.get(o.img);
+    if (!im) { im = new Image(); im.decoding = 'async'; im.src = o.img; imgCache.set(o.img, im); if (imgCache.size > 40) imgCache.delete(imgCache.keys().next().value); }
+    return im.complete && im.naturalWidth ? im : null;
+  }
+  const ovDur = (o) => o.d || (o.type === 'liste' ? 2.4 + 0.9 * (o.items || []).length : o.type === 'image' ? 3.5 : 3);
+  function ovPhase(o, t) { const d = ovDur(o), r = t - o.t; if (r < 0 || r > d) return null; return { r, d, a: clamp(Math.min(r / 0.22, (d - r) / 0.28), 0, 1), p: clamp(r / 0.32, 0, 1) }; }
+  const easeBack = (x) => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+  function fitFont(ctx, text, weight, size, family, maxW, min) {
+    ctx.font = weight + ' ' + size + 'px ' + family;
+    while (ctx.measureText(text).width > maxW && size > min) { size -= 2; ctx.font = weight + ' ' + size + 'px ' + family; }
+    return size;
+  }
+  function cardShadow(ctx) { ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; }
+  const OV_Y = { haut: 0.24, centre: 0.42, bas: 0.6 };
+
+  // Images en plein écran (plan de coupe) : dessinées juste après la vidéo, avant les sous-titres.
+  function drawCutaways(ctx, clip, t, st) {
+    (clip.overlays || []).forEach((o) => {
+      if (o.type !== 'image' || o.pos !== 'plein') return;
+      const ph = ovPhase(o, t); if (!ph) return;
+      const im = ovImage(o); if (!im) return;
+      ctx.save(); ctx.globalAlpha = ph.a;
+      let s = Math.max(W / im.naturalWidth, H / im.naturalHeight) * (1.04 + 0.06 * (ph.r / ph.d)); // léger zoom lent
+      const dw = im.naturalWidth * s, dh = im.naturalHeight * s;
+      ctx.filter = gradeFilter(st); ctx.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh); ctx.filter = 'none';
+      ctx.restore();
+    });
+  }
+
+  function drawOverlays(ctx, clip, t, brand) {
+    const accent = brand.highlight && brand.highlight !== '#FFE600' ? brand.highlight : '#FF7A1A';
+    (clip.overlays || []).forEach((o) => {
+      if (o.type === 'image' && o.pos === 'plein') return;
+      const ph = ovPhase(o, t); if (!ph) return;
+      const cy = H * (OV_Y[o.pos] || OV_Y.centre), sc = 0.82 + 0.18 * easeBack(ph.p);
+      ctx.save(); ctx.globalAlpha = ph.a; ctx.translate(W / 2, cy); ctx.scale(sc, sc); ctx.translate(-W / 2, -cy);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const title = String(o.title || '').trim(), text = String(o.text || '').trim();
+      if (o.type === 'emoji') {
+        const z = 1 + 0.08 * Math.sin(ph.r * 6);
+        ctx.translate(W / 2, cy); ctx.rotate(Math.sin(ph.r * 4) * 0.08); ctx.scale(z, z);
+        ctx.font = '170px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 24;
+        ctx.fillText(o.emoji || text || '🔥', 0, 0);
+        if (title) { ctx.font = '900 40px ' + FONTS.bold; ctx.fillStyle = '#fff'; ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(title.toUpperCase(), 0, 130); ctx.fillText(title.toUpperCase(), 0, 130); }
+      } else if (o.type === 'mot') {
+        const word = (text || title).toUpperCase();
+        const size = fitFont(ctx, word, '900', 74, FONTS.bold, W * 0.74, 34);
+        const tw = ctx.measureText(word).width, bw = tw + 64, bh = size * 1.5;
+        ctx.translate(W / 2, cy); ctx.rotate(-0.045);
+        cardShadow(ctx); ctx.fillStyle = accent; roundRect(ctx, -bw / 2, -bh / 2, bw, bh, 18); ctx.fill();
+        ctx.shadowColor = 'transparent'; ctx.fillStyle = '#fff'; ctx.fillText(word, 0, 3);
+      } else if (o.type === 'image') {
+        const im = ovImage(o); if (im) {
+          const maxW = W * 0.72, maxH = H * 0.34, s = Math.min(maxW / im.naturalWidth, maxH / im.naturalHeight);
+          const dw = im.naturalWidth * s, dh = im.naturalHeight * s, b = 10;
+          ctx.translate(W / 2, cy); ctx.rotate(-0.03);
+          cardShadow(ctx); ctx.fillStyle = '#fff'; roundRect(ctx, -dw / 2 - b, -dh / 2 - b, dw + 2 * b, dh + 2 * b + (title ? 54 : 0), 18); ctx.fill();
+          ctx.shadowColor = 'transparent'; ctx.save(); roundRect(ctx, -dw / 2, -dh / 2, dw, dh, 10); ctx.clip(); ctx.drawImage(im, -dw / 2, -dh / 2, dw, dh); ctx.restore();
+          if (title) { fitFont(ctx, title, '800', 30, FONTS.body, dw, 18); ctx.fillStyle = '#111'; ctx.fillText(title, 0, dh / 2 + 28); }
+        }
+      } else if (o.type === 'liste') {
+        const items = (o.items || []).filter(Boolean).slice(0, 4), cw = W * 0.84, rowH = 86, head = title ? 74 : 20;
+        const ch = head + items.length * rowH + 16, x0 = (W - cw) / 2, y0 = cy - ch / 2;
+        if (title) { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 16; fitFont(ctx, title.toUpperCase(), '900', 46, FONTS.bold, cw, 28); ctx.fillStyle = '#FFC233'; ctx.fillText(title.toUpperCase(), W / 2, y0 + 26); ctx.restore(); }
+        items.forEach((it, i) => {
+          const ap = clamp((ph.r - 0.35 - i * 0.7) / 0.25, 0, 1); if (ap <= 0) return;
+          const y = y0 + head + i * rowH, slide = (1 - ap) * 40;
+          ctx.save(); ctx.globalAlpha = ph.a * ap; ctx.translate(slide, 0);
+          cardShadow(ctx); ctx.fillStyle = '#fff'; roundRect(ctx, x0, y, cw, rowH - 14, 16); ctx.fill(); ctx.shadowColor = 'transparent';
+          ctx.fillStyle = '#1B74E8'; ctx.beginPath(); ctx.arc(x0 + 40, y + (rowH - 14) / 2, 20, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#fff'; ctx.font = '800 22px ' + FONTS.body; ctx.fillText(String(i + 1), x0 + 40, y + (rowH - 14) / 2 + 1);
+          ctx.textAlign = 'left'; ctx.fillStyle = '#111'; fitFont(ctx, it, '700', 28, FONTS.body, cw - 96, 18);
+          ctx.fillText(it, x0 + 74, y + (rowH - 14) / 2 + 1); ctx.restore();
+        });
+      } else { // chiffre, alerte, texte : carte blanche (ou jaune pour l'alerte)
+        const alert = o.type === 'alerte', big = o.type === 'chiffre';
+        const cw = W * 0.8, pad = 30, x0 = (W - cw) / 2;
+        let bigSize = 0, lines = [];
+        if (big) bigSize = fitFont(ctx, text, '900', 104, FONTS.bold, cw - pad * 2, 40);
+        ctx.font = '600 30px ' + FONTS.body;
+        const bodyTxt = big ? '' : text;
+        if (bodyTxt) lines = wrap(ctx, bodyTxt, cw - pad * 2 - (alert ? 70 : 0)).slice(0, 4);
+        const ch = pad * 2 + (title ? 40 : 0) + (big ? bigSize * 1.05 : 0) + lines.length * 40;
+        const y0 = cy - ch / 2;
+        cardShadow(ctx); ctx.fillStyle = alert ? '#FFD43B' : '#fff'; roundRect(ctx, x0, y0, cw, ch, 24); ctx.fill(); ctx.shadowColor = 'transparent';
+        if (!alert) { ctx.fillStyle = accent; roundRect(ctx, x0, y0 + 22, 8, ch - 44, 4); ctx.fill(); }
+        let y = y0 + pad;
+        ctx.textAlign = 'left';
+        const tx = x0 + pad + (alert ? 70 : 6);
+        if (alert) { ctx.font = '52px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(o.emoji || '⚠️', x0 + pad + 26, y0 + ch / 2); ctx.textAlign = 'left'; }
+        if (title) { ctx.fillStyle = alert ? '#3A2A00' : '#5A6A80'; fitFont(ctx, title, '700', 28, FONTS.body, cw - pad * 2 - (alert ? 70 : 6), 18); ctx.fillText(title, tx, y + 18); y += 40; }
+        if (big) {
+          // Le chiffre « compte » jusqu'à sa valeur quand il est simple (ex. 48, 90 %).
+          const m = /^(\D*?)(\d+)(\D*)$/.exec(text.replace(/\s/g, ''));
+          const shown = m && +m[2] < 100000 ? m[1] + Math.round(+m[2] * easeBack(clamp(ph.r / 0.8, 0, 1)) / easeBack(1)) + m[3] : text;
+          ctx.fillStyle = accent; ctx.font = '900 ' + bigSize + 'px ' + FONTS.bold; ctx.fillText(shown, tx, y + bigSize * 0.52); y += bigSize * 1.05;
+        }
+        ctx.fillStyle = alert ? '#2A1E00' : '#111'; ctx.font = (alert ? '800 ' : '600 ') + '30px ' + FONTS.body;
+        lines.forEach((l) => { ctx.fillText(l, tx, y + 20); y += 40; });
+      }
+      ctx.restore();
+    });
   }
 
   /* ---------- Dessin ---------- */
@@ -440,7 +578,14 @@
     ctx.save();
     const intro = st.template === 'podcast' && podcastIntro(st, rel, len, sw, sh);
     if (intro) drawPodcastIntro(ctx, src, sw, sh, clip, st, rel, len);
-    else drawVideo(ctx, src, sw, sh, st, tAbs, st.template === 'punch' ? punchZoom(clip, groups, tAbs) : 1);
+    else {
+      ctx.filter = gradeFilter(st);
+      drawVideo(ctx, src, sw, sh, st, tAbs, st.template === 'punch' ? punchZoom(clip, groups, tAbs) : 1);
+      ctx.filter = 'none';
+    }
+    gradeLayers(ctx, st);
+    drawCutaways(ctx, clip, tAbs, st);
+    drawOverlays(ctx, clip, tAbs, b);
     if (st.captions && groups) drawCaptions(ctx, groups, st, tAbs, b, kw);
     if (st.template === 'citation') drawQuote(ctx, clip, st, rel, len);
     else if (st.template === 'punch' || st.template === 'tuto') drawBigTitle(ctx, clip, st, rel, len, b, st.template === 'tuto');
@@ -541,5 +686,5 @@
     return '';
   }
 
-  window.CMRender = { W, H, TEMPLATES, defaultStyle, buildGroups, draw, analyzeFraming, detector, pickMime, trackAt, keyIndex, keyTimes };
+  window.CMRender = { W, H, TEMPLATES, defaultStyle, buildGroups, draw, analyzeFraming, detector, pickMime, trackAt, keyIndex, keyTimes, GRADES, OV_TYPES, ovDur };
 })();

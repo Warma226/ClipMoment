@@ -172,6 +172,9 @@
             const segments = mid < k ? [[s, segs[mid - 1][1]], [segs[mid + 1] ? segs[mid + 1][0] : segs[mid][0], e]] : [[s, e]];
             out.push({ start: s, end: e, segments, title: '« ' + segs[i][2].replace(key, key.toUpperCase()) + ' »',
               context: 'Extrait de la vidéo (mode démo)', hook: words.slice(0, 4).join(' ').toUpperCase(), keywords: [key.replace(/^[a-zà-ÿ]{1,2}['’]/i, '').replace(/[^\p{L}\p{N}]/gu, '')],
+              overlays: [{ at: Math.round((s + 4) * 10) / 10, type: 'chiffre', title: 'Minutes par jour', text: '3', items: [], emoji: '' },
+                { at: Math.round((s + 11) * 10) / 10, type: 'liste', title: 'Les bons réflexes', text: '', items: ['Commencer petit', 'Continuer chaque jour'], emoji: '' },
+                { at: Math.round((s + 19) * 10) / 10, type: 'emoji', title: '', text: '', items: [], emoji: '🔥' }],
               score: 92 - out.length * 9 - (i % 4), reason: 'Phrase d\'accroche forte et idée complète (exemple du mode démo).' });
           }
           i = k + 2;
